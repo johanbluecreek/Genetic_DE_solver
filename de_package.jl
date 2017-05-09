@@ -1,5 +1,5 @@
 using Calculus
-
+#XXX: The above cause warnings if running this with @everywhere, but seems to work...
 
 functions = ["s", "c", "e", "l", "u"]
 operators = ["+", "-", "*", "/"]
