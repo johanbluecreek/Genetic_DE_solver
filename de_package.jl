@@ -1,5 +1,5 @@
 using Calculus
-#XXX: The above cause warnings if running this with @everywhere, but seems to work...
+#XXX: The above cause warnings if running this file with @everywhere, but seems to work...
 
 functions = ["s", "c", "e", "l", "u"]
 operators = ["+", "-", "*", "/"]
@@ -7,6 +7,9 @@ digits = vcat(["$i" for i=range(0,10)], ["p"])
 vars = ["x"]
 
 terminators = vcat(digits, vars, vars, vars, vars, vars)
+
+# "z" is an operator that deactivates the following chromosome
+header_operators = vcat(operators, ["z"])
 
 head = vcat(functions, operators, vars, digits, vars, vars, vars, vars)
 tail = vcat(digits, vars)
@@ -161,15 +164,16 @@ end
 # Function to initate a flat, e.g. diff-eq independent, Individual
 function init_flat_indi(length::Int=1, head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
   clist = Chromosome[]
-  header = ""
   thestring = ""
-  for i in 1:length
-    push!(clist, init_chromo(head, head_l, tail, tail_l, dict))
-    header = header * rand(operators)
-    thestring = thestring * "(" * clist[i].thestring * ")" * string(header[i])
+  header = *(map(x->rand(header_operators), 1:(length-1))...)
+  clist = map(x->init_chromo(head, head_l, tail, tail_l, dict), 1:length)
+  # The "z" operator is resoved from the end.
+  for i in (length-1):-1:1
+    if string(header[i]) != "z"
+      thestring = string(header[i]) * "(" * clist[i+1].thestring * ")" * thestring
+    end
   end
-  header = header[1:end-1]
-  thestring = thestring[1:end-1]
+  thestring = "(" * clist[1].thestring * ")" * thestring
   return Individual(clist, header, thestring, Inf, Inf, Inf, Inf, "", ["",0], [0.0,0.0], head, head_l, tail, tail_l, dict)
 end
 
@@ -326,10 +330,14 @@ function reparse_indi(inindi::Individual)
   if change
     indi.clist = new_clist
     thestring = ""
-    for i in 1:(length(new_clist)-1)
-      thestring = thestring * "(" * indi.clist[i].thestring * ")" * string(indi.header[i])
+
+    for i in (length(new_clist)-1):-1:1
+      if string(indi.header[i]) != "z"
+        thestring = string(indi.header[i]) * "(" * indi.clist[i+1].thestring * ")" * thestring
+      end
     end
-    thestring = thestring * "(" * indi.clist[end].thestring * ")"
+    thestring = "(" * indi.clist[1].thestring * ")" * thestring
+
     indi.thestring = thestring
     return init_full_indi(indi, indi.de, indi.bc, indi.ival)
   else
@@ -636,12 +644,15 @@ function mutate_head(inindi::Individual, mrate::Float64=0.3)
     end
   end
   # generate new thestring
-  # TODO: Merge the below with the above loop, to avoid having two for-loops
+  # TODO: Merge the below with the above loop, to avoid having two for-loops (?)
   new_thestring = ""
-  for i in 1:(length(indi.clist)-1)
-    new_thestring *= "(" * indi.clist[i].thestring * ")" * string(new_header[i])
+  for i in (length(indi.clist)-1):-1:1
+    if string(new_header[i]) != "z"
+      new_thestring = string(new_header[i]) * "(" * indi.clist[i+1].thestring * ")" * new_thestring
+    end
   end
-  new_thestring *= "(" * indi.clist[end].thestring * ")"
+  new_thestring = "(" * indi.clist[1].thestring * ")" * new_thestring
+
   return init_full_indi(
     Individual(indi.clist, new_header, new_thestring, Inf, Inf, Inf, Inf, "", ["",0], [0.0,0.0], indi.head, indi.head_l, indi.tail, indi.tail_l, indi.dict),
     indi.de, indi.bc, indi.ival
@@ -706,7 +717,7 @@ end
 
 # Crossover -- Individual level
 
-#TODO: Implement this XXX: Really necessary?
+#TODO: Implement this
 function crossover_head(p1in::Individual, p2in::Individual, method::String="one-point")
   p1, p2 = deepcopy(p1in), deepcopy(p2in)
   if method == "one-point"

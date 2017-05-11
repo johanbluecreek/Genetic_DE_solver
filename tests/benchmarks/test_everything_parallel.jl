@@ -2,19 +2,19 @@
 
 @everywhere include("./../../de_package.jl")
 
-head_l = 5
-tail_l = 10
-cnum = 4
+head_l = 10
+tail_l = 20
+cnum = 10
 
-include("./../../odes/ode1.jl")
+include("./../../odes/ode3.jl")
 
-pop_size = 400
+pop_size = 1000
 stop = 1000
-sens = 10.0^(-7)
+sens = 10.0^(-10)
 
 times = Float64[]
 iters = Int[]
-len = 30
+len = 2
 for i = 1:len
 
   iter = 1
@@ -116,6 +116,7 @@ for i = 1:len
   #print_indi(pop[1])
 
   println("Found in: $iter; time: $(time()-start)")
+  println("sol: $(pop[1].thestring)")
 
   push!(iters, iter)
   push!(times, time()-start)
