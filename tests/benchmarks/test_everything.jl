@@ -7,15 +7,16 @@ head_l = 5
 tail_l = 10
 cnum = 4
 
-include("./../../odes/ode1.jl")
+# include("./../../odes/ode1.jl")
+include("./../../pdes/pde1.jl")
 
-pop_size = 400
-stop = 1000
+pop_size = 10
+stop = 20
 sens = 10.0^(-7)
 
 times = Float64[]
 iters = Int[]
-len = 30
+len = 1
 for i = 1:len
 
   iter = 1
@@ -112,8 +113,8 @@ for i = 1:len
 
   end
 
-  #println("FINAL BEST:")
-  #print_indi(pop[1])
+  println("FINAL BEST:")
+  print_indi(pop[1])
 
   println("Found in: $iter; time: $(time()-start)")
 
