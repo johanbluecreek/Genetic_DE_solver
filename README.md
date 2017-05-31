@@ -34,7 +34,7 @@ Crude TODO-list/feature wish-list
 * Implement the rest of the crossover operators listed in **[MF]** and **[E]**
 * Also implement their parent-selection methods
 * Add support for systems of ODE:s
-* Add support for PDE:s
+* Add support for PDE:s (see branch 'partial')
 * Add the rest of the ODE:s and NODE:s in **[TL]**
 * Document functions and code
 
