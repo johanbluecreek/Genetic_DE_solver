@@ -708,7 +708,21 @@ function crossover(p1in::Individual, p2in::Individual, cselchance::Float64=1.0, 
 =#
   elseif method == "random-crossing"
     # Allow genes to jump between positions in the Individuals clist
-    return p1, p2
+    #TODO: Loop this to make sure that the returned parents are new
+    cclist1 = Chromosome[]
+    cclist2 = Chromosome[]
+    for i in 1:length(p1.clist)
+      if rand() <= cselchance
+        push!(cclist1, p2.clist[i])
+        push!(cclist2, p1.clist[i])
+      else
+        push!(cclist1, p1.clist[i])
+        push!(cclist2, p2.clist[i])
+      end
+    end
+    p1.clist = cclist1
+    p2.clist = cclist2
+    return reparse_indi(p1), reparse_indi(p2)
   else
     println("WARNING: No support for method: '$method'. Nothing done.")
     return p1, p2

@@ -9,13 +9,13 @@ cnum = 4
 
 include("./../../odes/ode1.jl")
 
-pop_size = 400
-stop = 1000
+pop_size = 20
+stop = 40
 sens = 10.0^(-7)
 
 times = Float64[]
 iters = Int[]
-len = 30
+len = 1
 for i = 1:len
 
   iter = 1
@@ -76,7 +76,15 @@ for i = 1:len
       push!(ncr_pop, mem[2])
     end
 
-    pop = vcat(pop, mc_pop, mr_pop, mg_pop, mt_pop, mh_pop, nct_pop, ncr_pop)
+    p_pop = gen_p_pop(pop, p_pop_halfsize, "random")
+    cc_pop = map(x -> crossover(x..., 0.3, "random-crossing") , p_pop)
+    ncc_pop = Individual[]
+    for mem in cc_pop
+      push!(ncc_pop, mem[1])
+      push!(ncc_pop, mem[2])
+    end
+
+    pop = vcat(pop, mc_pop, mr_pop, mg_pop, mt_pop, mh_pop, nct_pop, ncr_pop, ncc_pop)
 
     new_pop = Individual[]
     for mem in pop
