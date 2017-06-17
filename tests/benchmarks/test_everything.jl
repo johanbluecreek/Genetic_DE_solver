@@ -3,14 +3,14 @@
 
 include("./../../de_package.jl")
 
-head_l = 5
-tail_l = 10
-cnum = 4
+head_l = 10
+tail_l = 2*head_l
+cnum = 5
 
 include("./../../odes/ode1.jl")
 
-pop_size = 20
-stop = 40
+pop_size = 50
+stop = 200
 sens = 10.0^(-7)
 
 times = Float64[]

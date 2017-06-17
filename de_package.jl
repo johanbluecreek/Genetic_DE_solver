@@ -353,6 +353,9 @@ function eq_indi(indi1, indi2)
       eq = eq && false
     end
   end
+  if indi1.thestring == indi2.thestring
+    eq = true
+  end
   return eq
 end
 
