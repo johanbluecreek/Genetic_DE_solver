@@ -531,11 +531,56 @@ end
 
 #TODO
 # Swaps arguments for operators
-function mut_swap(chromo::Chromosome)
-  # Identify operator
-  # identify the two following sub-branches
-  # swap them
-  return chromo
+function mut_swap(chromoin::Chromosome)
+  chromo = deepcopy(chromoin)
+
+  # Find a operator that is to have its arguments swaped
+  ops = find( x -> string(x) in operators, chromo.tree)
+  # return original if there are no operators
+  if length(ops) == 0
+    return chromo
+  end
+  pos = rand(ops)
+  # construct first sub-tree
+  fts = pos+1
+  open = 1
+  c = fts+1
+  while open > 0
+    if chromo.tree[c] == '('
+      open += 1
+    elseif chromo.tree[c] == ')'
+      open -= 1
+    end
+    c += 1
+  end
+  fte = c-1
+  ft = chromo.tree[fts:fte]
+  # construct second sub-tree
+  sts = fte+1
+  open = 1
+  c = sts+1
+  while open > 0
+    if chromo.tree[c] == '('
+      open += 1
+    elseif chromo.tree[c] == ')'
+      open -= 1
+    end
+    c += 1
+  end
+  ste = c-1
+  st = chromo.tree[sts:ste]
+
+  newtree = chromo.tree[1:pos]
+  newtree *= st
+  newtree *= ft
+  newtree *= chromo.tree[c:end]
+
+  newtree = replace(replace(newtree,"(",""),")","")
+  origtree = replace(replace(chromo.tree,"(",""),")","")
+  #XXX: This is not safe... but easy.
+  new_clist = replace(chromo.clist, origtree, newtree)
+
+  return Chromosome(new_clist, chromo.thestring, chromo.tree, chromo.head, chromo.head_l, chromo.tail, chromo.tail_l, chromo.dict)
 end
 
 ## Actual mutate
@@ -564,7 +609,23 @@ function mutate(inindi::Individual, mrate::Float64=0.6, mselchance::Float64=0.2,
     end
   elseif method == "swap"
     # Swaps arguements for an operator
-    return indi
+    if length(indi.clist) == 1
+      indi.clist = Chromosome[mut_swap(indi.clist[1])]
+      indi = reparse_indi(indi)
+      return indi
+    else
+      new_clist = Chromosome[]
+      for chromo in indi.clist
+        if rand() <= mselchance
+          push!(new_clist, mut_swap(chromo))
+        else
+          push!(new_clist, chromo)
+        end
+      end
+      indi.clist = new_clist
+      indi = reparse_indi(indi)
+      return indi
+    end
   elseif method == "grow"
     # Grows a random tree
     if length(indi.clist) == 1

@@ -56,6 +56,9 @@ for i = 1:len
     mt_pop = map(x -> mutate(x, 0.6, 0.2, "trunc"), m_pop)
 
     m_pop = gen_m_pop(pop, m_pop_size, "random")
+    ms_pop = map(x -> mutate(x, 0.6, 0.2, "swap"), m_pop)
+
+    m_pop = gen_m_pop(pop, m_pop_size, "random")
     mh_pop = map(mutate_head, m_pop)
 
     # Crossover
@@ -84,7 +87,7 @@ for i = 1:len
       push!(ncc_pop, mem[2])
     end
 
-    pop = vcat(pop, mc_pop, mr_pop, mg_pop, mt_pop, mh_pop, nct_pop, ncr_pop, ncc_pop)
+    pop = vcat(pop, mc_pop, mr_pop, mg_pop, mt_pop, mh_pop, ms_pop, nct_pop, ncr_pop, ncc_pop)
 
     new_pop = Individual[]
     for mem in pop
@@ -121,7 +124,7 @@ for i = 1:len
   end
 
   #println("FINAL BEST:")
-  #print_indi(pop[1])
+  print_indi(pop[1])
 
   println("Found in: $iter; time: $(time()-start)")
 
