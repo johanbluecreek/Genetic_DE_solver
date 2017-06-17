@@ -693,6 +693,27 @@ end
 
 # Mutate -- Individual level
 
+#TODO: Write a mutate that changes the places of chromosomes in the individual.
+#XXX: Random change for now. Implement support for mrate
+function mutate_jump(inindi::Individual, mrate::Float64=0.3)
+  indi = deepcopy(inindi)
+  new_clist = map(x->indi.clist[x], randperm(length(indi.clist)))
+
+  #XXX: The below code-block is repeated in three places, at least! Make it a function!
+  thestring = ""
+  for i in (length(indi.clist)-1):-1:1
+    if string(indi.header[i]) != "z"
+      thestring = string(indi.header[i]) * "(" * new_clist[i+1].thestring * ")" * thestring
+    end
+  end
+  thestring = "(" * new_clist[1].thestring * ")" * thestring
+
+  return init_full_indi(
+    Individual(new_clist, indi.header, thestring, Inf, Inf, Inf, Inf, "", ["",0], [0.0,0.0], indi.head, indi.head_l, indi.tail, indi.tail_l, indi.dict),
+    indi.de, indi.bc, indi.ival
+  )
+end
+
 # Mutates the header that combines the Chromosomes beloning to an Individual
 function mutate_head(inindi::Individual, mrate::Float64=0.3)
   indi = deepcopy(inindi)
@@ -756,6 +777,7 @@ function crossover(p1in::Individual, p2in::Individual, cselchance::Float64=1.0, 
     # Breaks a Chromosome clist at two random points. Causes chaotic behaviour.
     return p1, p2
   elseif method == "safe-two-point"
+    # Switches sub-branches between individuals
 #=
     for i in 1:length(p1.clist)
       if rand() <= cselchance

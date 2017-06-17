@@ -61,6 +61,9 @@ for i = 1:len
     m_pop = gen_m_pop(pop, m_pop_size, "random")
     mh_pop = map(mutate_head, m_pop)
 
+    m_pop = gen_m_pop(pop, m_pop_size, "random")
+    mj_pop = map(mutate_jump, m_pop)
+
     # Crossover
     p_pop_halfsize = Int(round(pop_size/2))
     p_pop = gen_p_pop(pop, p_pop_halfsize, "tournament")
@@ -87,7 +90,8 @@ for i = 1:len
       push!(ncc_pop, mem[2])
     end
 
-    pop = vcat(pop, mc_pop, mr_pop, mg_pop, mt_pop, mh_pop, ms_pop, nct_pop, ncr_pop, ncc_pop)
+    #XXX: Doing this really kills diversity very fast.
+    pop = vcat(pop, mc_pop, mr_pop, mg_pop, mt_pop, mh_pop, ms_pop, ms_pop, nct_pop, ncr_pop, ncc_pop)
 
     new_pop = Individual[]
     for mem in pop

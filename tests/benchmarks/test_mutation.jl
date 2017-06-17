@@ -13,10 +13,13 @@ pop = gen_pop(pop_size, de, bc, ival, cnum)
 # Simply change the method-string below and run program.
 # The original versus mutated population will be displayed pairwise for you
 # to compare.
-m_pop = map(x -> mutate(x, 1.0, 1.0, "swap"), pop)
 
+#m_pop = map(x -> mutate(x, 1.0, 1.0, "swap"), pop)
+m_pop = map(mutate_jump, pop)
 
 for i in 1:pop_size
-  println(pop[i].thestring)
-  println(m_pop[i].thestring)
+  println("----")
+  println("head: ", pop[i].header)
+  println("ori: ", pop[i].thestring)
+  println("new: ", m_pop[i].thestring)
 end
