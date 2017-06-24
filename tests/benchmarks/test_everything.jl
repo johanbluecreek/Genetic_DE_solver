@@ -8,6 +8,7 @@ tail_l = 2*head_l
 cnum = 5
 
 include("./../../odes/ode1.jl")
+#include("./../../pdes/pde1.jl")
 
 pop_size = 50
 stop = 200
@@ -127,7 +128,7 @@ for i = 1:len
 
   end
 
-  #println("FINAL BEST:")
+  println("FINAL BEST:")
   print_indi(pop[1])
 
   println("Found in: $iter; time: $(time()-start)")

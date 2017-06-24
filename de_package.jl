@@ -1,10 +1,12 @@
 using Calculus
 #XXX: The above cause warnings if running this file with @everywhere, but seems to work...
+using Suppressor
 
 functions = ["s", "c", "e", "l", "u"]
 operators = ["+", "-", "*", "/"]
 digits = vcat(["$i" for i=range(0,10)], ["p"])
-vars = ["x"]
+
+vars = ["x", "y"]
 
 terminators = vcat(digits, vars, vars, vars, vars, vars)
 
@@ -209,23 +211,26 @@ function safe_string(instring::String)
 end
 
 # Function to resolve mathematical expressions. <e> symbolises the expression,
-# <ep> its first derivative, <epp...> higher derivatives.
+# <ex> its first derivative w.r.t. x, etc.
 function parse_expr(expr::String, indi::Individual)
-  name = "e"
   thestring = indi.thestring
-  expr = replace(expr, "<" * name * ">", thestring)
-  while typeof(match(r"(?<=(\<)).*?(?=\>)", expr)) != Void
-    name = name * "p"
-    try
+  regexp = r"(?<=(\<)).*?(?=\>)"
+  m = match(regexp, expr)
+  while typeof(m) != Void
+    name = m.match
+
+    sub = thestring
+    for var in name[2:end]
       #XXX: You will be able to get an infinite loop here unless you use
       # Calculus with https://github.com/johnmyleswhite/Calculus.jl/pull/107
-      # merged
-      thestring = differentiate(thestring, :x)
-      thestring = string(thestring)
-    catch
-      thestring = "Inf"
+      try
+        sub = differentiate(sub, parse(string(var)))
+      catch
+        sub = "Inf"
+      end
     end
-    expr = replace(expr, "<" * name * ">", thestring)
+    expr = replace(expr, "<" * name * ">", sub)
+    m = match(regexp, expr)
   end
   return expr
 end
@@ -234,24 +239,24 @@ end
 function init_full_indi(inindi::Individual, de::String, bc::Array{Any,1}, ival::Array{Float64,1})
   indi = deepcopy(inindi)
   # Calculate error
-  eval_de = parse_expr(de, indi)
-  xlist = linspace(ival[1],ival[2],10)
+  eval_de = parse(parse_expr(de, indi))
+  plist = linspace(ival[1],ival[2],10)
   error = 0
-  for x in xlist
-    try
-      #FIXME: Find a better work-around for the below
-      work = eval_de
-      work = replace(work, "exp", "å")
-      work = replace(work, "x", "$x")
-      work = replace(work, "å", "exp")
-      work = safe_string(work)
-      error = error + (eval(parse(work)))^2
-    catch
-      error = Inf
-    end
+  
+  #XXX: The below is the solution...
+  try
+    #FIXME: The below always gets caught
+    # meta-write a function that can evaluate the DE
+    eval(parse("function g(" * join(vars, ", ")  * "); $eval_de; end"))
+    # meta-write a list that has the function values
+    work = vcat(eval(parse("[ g(" * join(vars, "s, ") * "s) for " * join(vars, "s = $plist, ") * "s = $plist ]"))...)
+    error = +(map(x -> x^2, work)...)
+  catch
+    error = Inf
   end
 
   # Calculate penalty
+  #PDE: Find an ok syntax för PDE BC
   eval_bc = parse_expr(bc[1], indi)
   penalty = Inf
   try
