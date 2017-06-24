@@ -196,7 +196,7 @@ function print_indi(entry::Individual)
 end
 
 # Julia interprets juxtaposition of a floatingpoint number and a variable as
-# multiplication, however the cone here works on explicit multiplication signs
+# multiplication, however the code here works on explicit multiplication signs
 # This is to remove those occurences
 function safe_string(instring::String)
   # regex from http://www.regular-expressions.info/floatingpoint.html
@@ -318,7 +318,8 @@ function reparse_indi(inindi::Individual)
   new_clist = Chromosome[]
   change = false
   for mem in indi.clist
-    if mem.clist != replace(replace(mem.tree,"(",""),")","")  #XXX: This won't work. Tree is truncated compared to clist!
+    flat_tree = replace(replace(mem.tree,"(",""),")","")
+    if mem.clist[1:length(flat_tree)] != flat_tree
       push!(new_clist, reparse_chromo(mem))
       change = true
     else
@@ -326,7 +327,7 @@ function reparse_indi(inindi::Individual)
     end
   end
 
-  # Make sure that init_full_indi() only runs when it has indeed changed (see XXX above)
+  # Make sure that init_full_indi() only runs when it has indeed changed
   if change
     indi.clist = new_clist
     thestring = ""
@@ -532,7 +533,6 @@ function mut_grow(chromoin::Chromosome)
   return Chromosome(new_clist, chromo.thestring, chromo.tree, chromo.head, chromo.head_l, chromo.tail, chromo.tail_l, chromo.dict)
 end
 
-#TODO
 # Swaps arguments for operators
 function mut_swap(chromoin::Chromosome)
   chromo = deepcopy(chromoin)
@@ -580,7 +580,7 @@ function mut_swap(chromoin::Chromosome)
 
   newtree = replace(replace(newtree,"(",""),")","")
   origtree = replace(replace(chromo.tree,"(",""),")","")
-  #XXX: This is not safe... but easy.
+  #XXX: This is may cause unwanted replacements
   new_clist = replace(chromo.clist, origtree, newtree)
 
   return Chromosome(new_clist, chromo.thestring, chromo.tree, chromo.head, chromo.head_l, chromo.tail, chromo.tail_l, chromo.dict)
