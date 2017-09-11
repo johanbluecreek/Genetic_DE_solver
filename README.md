@@ -23,22 +23,22 @@ The solutions are found using the following structure
 
 <table>
   <tr>
-    <td colspan="13">**Individual**<br/> Represents solution to system of differential equations </td>
+    <td colspan="13"><b>Individual</b><br/> Represents solution to system of differential equations </td>
   </tr>
   <tr>
-    <td colspan="4">**Chromosome**<br/> Expression for Function `1` </td>
-    <td colspan="4">**Chromosome**<br/> Expression for Function `2` </td>
-    <td >**...**</td>
-    <td colspan="4">**Chromosome**<br/> Expression for Function `n`</td>
+    <td colspan="4"><b>Chromosome</b><br/> Expression for Function <code>1</code> </td>
+    <td colspan="4"><b>Chromosome</b><br/> Expression for Function <code>2</code> </td>
+    <td ><b>...</b></td>
+    <td colspan="4"><b>Chromosome</b><br/> Expression for Function <code>n</code></td>
   </tr>
   <tr>
-    <td>**Gene**<br/> Sub-expression `1` </td>
-    <td>**Gene**<br/> Sub-expression `2` </td>
-    <td>**...**</td>
-    <td>**Gene**<br/> Sub-expression `m` </td>
-    <td colspan="4">**Genes...**</td>
-    <td>**...**</td>
-    <td colspan="4">**Genes...**</td>
+    <td><b>Gene</b><br/> Sub-expression <code>1</code> </td>
+    <td><b>Gene</b><br/> Sub-expression <code>2</code> </td>
+    <td><b>...</b></td>
+    <td><b>Gene</b><br/> Sub-expression <code>m</code> </td>
+    <td colspan="4"><b>Genes...</b></td>
+    <td><b>...</b></td>
+    <td colspan="4"><b>Genes...</b></td>
   </tr>
 </table>
 
