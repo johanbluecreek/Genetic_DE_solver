@@ -36,11 +36,8 @@ The solutions are found using the following structure
     <td>**Gene**<br/> Sub-expression `2` </td>
     <td>**...**</td>
     <td>**Gene**<br/> Sub-expression `m` </td>
-
     <td colspan="4">**Genes...**</td>
-
     <td>**...**</td>
-
     <td colspan="4">**Genes...**</td>
   </tr>
 </table>
