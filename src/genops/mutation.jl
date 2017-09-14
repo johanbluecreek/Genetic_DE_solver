@@ -59,11 +59,19 @@ determines change.
 
 # Examples
 ```julia-repl
-julia>
+julia> include("./src/GeneticDESolver.jl");
+
+julia> include("src/testenv.jl");
+
+julia> test_gene
+(1)-(((0))+(y))
+
+julia> mut_random(test_gene, .2)
+(1)/(((0))+(y))
 
 ```
 """
-function mut_random(gene::Gene, mrate::Float64)
+function mut_random(gene::Gene, mrate::Float64=1.0)
   new_elist = ""
   iter = 1
   for part in gene.elist
@@ -88,7 +96,15 @@ Truncates a branch in a `Gene` expression tree, and pads the end of the `elist`.
 
 # Examples
 ```julia-repl
-julia>
+julia> include("./src/GeneticDESolver.jl");
+
+julia> include("src/testenv.jl");
+
+julia> test_gene
+(1)-(((0))+(y))
+
+julia> mut_trunc(test_gene)
+(1)-((7)+(y))
 
 ```
 """
@@ -149,7 +165,15 @@ Grows a branch in a `Gene` expression tree from a terminator, and truncates from
 
 # Examples
 ```julia-repl
-julia>
+julia> include("./src/GeneticDESolver.jl");
+
+julia> include("src/testenv.jl");
+
+julia> test_gene
+(1)-(((0))+(y))
+
+julia> mut_grow(test_gene)
+(1)-(((cos((x))))+(y))
 
 ```
 """
@@ -188,7 +212,7 @@ function mut_grow(genein::Gene)
   new_elist = new_elist[1:length(gene.elist)]
 
   # Make it safe
-  new_elist = ""
+  nnew_elist = ""
   for i in 1:length(new_elist)
     char = string(new_elist[i])
     if char in gene.head && !(char in gene.tail) && i > gene.head_l

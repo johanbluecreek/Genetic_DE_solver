@@ -15,11 +15,27 @@ Mutates `input` on the level of the head (that is, how `Gene`s are combined).
 `"combo"` mutates how the genes are combined.
 
 # Examples
+```julia-repl
+julia> include("./src/GeneticDESolver.jl");
 
+julia> include("src/testenv.jl");
+
+julia> test_chromo
+(log((6)*(x)))+(y)/(2)+(x)/(x)
+
+julia> muthead(test_chromo, .6, "jump")
+(2)+(y)/(log((6)*(x)))+(x)/(x)
+
+julia> muthead(test_chromo, .6, "scramble")
+(x)+(2)/(x)+(log((6)*(x)))/(y)
+
+julia> muthead(test_chromo, .6, "combo")
+(log((6)*(x)))*(y)*(2)+(x)*(x)
+```
 """
 function muthead(inchromo::Chromosome, mrate::Float64=0.6, method::String="jump")
     chromo = deepcopy(inchromo)
-    methods = ["scramble", "combo"]
+    methods = ["scramble", "jump", "combo"]
     if method in methods
         #XXX: Might want to have separate functions for all of these in the future...
         # See documentation for `muth_[method]` for a description for each of the methods.
@@ -44,9 +60,9 @@ function muthead(inchromo::Chromosome, mrate::Float64=0.6, method::String="jump"
                 end
                 new_glist = Gene[]
                 append!(new_glist, chromo.glist[1:(r1-1)])
-                append!(new_glist, chromo.glist[r2])
+                append!(new_glist, chromo.glist[r2:r2])
                 append!(new_glist, chromo.glist[r1+1:(r2-1)])
-                append!(new_glist, chromo.glist[r1])
+                append!(new_glist, chromo.glist[r1:r1])
                 append!(new_glist, chromo.glist[r2+1:end])
                 chromo.glist = new_glist
             else

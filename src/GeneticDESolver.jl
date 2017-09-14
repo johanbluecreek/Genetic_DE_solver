@@ -5,6 +5,8 @@ using Iterators
 
 import Base.show
 
+GDES_loaded = true
+
 # Types
 include("types.jl")
 # General functions

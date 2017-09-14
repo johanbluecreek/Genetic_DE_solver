@@ -241,7 +241,7 @@ julia> init_chromo(5, ["*"], ["+"], 2, ["1", "2", "x"], 4, Dict("+" => "(<expr>)
 
 ```
 """
-function init_chromo(glen::Int=2, header_operators::Array{String,1}=header_operators, head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
+function init_chromo(glen::Int=5, header_operators::Array{String,1}=header_operators, head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
   glist = Gene[]
   thestring = ""
   header = ""
@@ -342,6 +342,10 @@ Evaluates a string representation of a mathematical expression w.r.t. the `chrom
 # Examples
 
 ## Single "ODE" (simple example)
+
+The default expression for a function is `e`, so for an ODE/expression with only one
+function to be evaluated
+
  ```julia-repl
 julia> chromo = init_chromo(2, ["*"], ["+"], 2, ["1", "2", "x"], 4, Dict("+" => "(<expr>)+(<expr>)", "*" => "(<expr>)*(<expr>)"))
 (((1)+(x))+(2))*(((x)+(2))+(1))
@@ -355,6 +359,10 @@ julia> expr = "<ex>"; parse_expr(expr, chromo)
 ```
 
 ## System of "PDEs" (advanced example)
+
+When `flist` is provided to `parse_expr()`, the default is overwritten and the given
+function names are used instead
+
 ```julia-repl
 julia> expr1 = "<f1x> + <f2x>";
 
@@ -485,7 +493,7 @@ julia> init_indi(de, bc, ival)
 
 ```
 """
-function init_indi(de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist, glen::Int=2, header_operators::Array{String,1}=header_operators, head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
+function init_indi(de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist, glen::Int=5, header_operators::Array{String,1}=header_operators, head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
   # List of Chromosomes
   indi_clist = map(x -> init_chromo(glen, header_operators, head, head_l, tail, tail_l, dict), 1:length(flist))
   return Individual(indi_clist, gen_indi(indi_clist, de, bc, ival, flist)...)
