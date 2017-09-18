@@ -450,6 +450,7 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     indi_def = parse_expr(de, indi_clist, flist)
     indi_def = *(map(x-> " + ($x)^2", indi_def)...)
     indi_def = "(" * join(vars, ",") * ") -> " * indi_def
+    println(indi_def)
     indi_def = eval(parse(indi_def))
     ## Set up domain
     dom = map(x -> linspace(x...,10), ival)
