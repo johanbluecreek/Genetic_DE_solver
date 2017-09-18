@@ -472,6 +472,22 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
   # Return
   return indi_def, indi_error, indi_penalty, indi_shape, indi_fitness, de, bc, ival
 end
+#FIXME: This sometimes gives... errors:
+# ERROR: LoadError: DomainError:
+#  in nan_dom_err at ./math.jl:196 [inlined]
+#  in log(::Float64) at ./math.jl:202
+#  in (::##39#40)(::Float64, ::Float64) at ./none:1
+#  in grow_to!(::Array{Union{},1}, ::Base.Generator{Iterators.Product{Tuple{LinSpace{Float64},LinSpace{Float64}}},##11#14}, ::Tuple{Array{Any,1},Array{Any,1}}) at # ./array.jl:364
+#  in grow_to!(::Array{Any,1}, ::Base.Generator{Iterators.Product{Tuple{LinSpace{Float64},LinSpace{Float64}}},##11#14}) at ./array.jl:357
+#  in collect(::Base.Generator{Iterators.Product{Tuple{LinSpace{Float64},LinSpace{Float64}}},##11#14}) at ./array.jl:301
+#  in gen_indi(::Array{Chromosome,1}, ::Array{String,1}, ::Array{Int64,1}, ::Array{Tuple{Float64,Float64},1}, ::Array{String,1}) at # /home/jesus/github/Genetic_DE_solver/src/genfunc.jl:459
+#  in init_indi(::Array{String,1}, ::Array{Int64,1}, ::Array{Tuple{Float64,Float64},1}, ::Array{String,1}, ::Int64, ::Array{String,1}, ::Array{String,1}, ::Int64, # ::Array{String,1}, ::Int64, ::Dict{String,String}) at /home/jesus/github/Genetic_DE_solver/src/genfunc.jl:499
+#  in gen_pop(::Int64, ::Array{String,1}, ::Array{Int64,1}, ::Array{Tuple{Float64,Float64},1}, ::Array{String,1}, ::Int64, ::Array{String,1}, ::Array{String,1}, # ::Int64, ::Array{String,1}, ::Int64, ::Dict{String,String}) at /home/jesus/github/Genetic_DE_solver/src/genops/population.jl:33
+#  in gen_pop(::Int64, ::Array{String,1}, ::Array{Int64,1}, ::Array{Tuple{Float64,Float64},1}, ::Array{String,1}, ::Int64, ::Array{String,1}, ::Array{String,1}, # ::Int64, ::Array{String,1}, ::Int64) at /home/jesus/github/Genetic_DE_solver/src/genops/population.jl:31 (repeats 7 times)
+#  in include_from_node1(::String) at ./loading.jl:488
+# while loading /home/jesus/github/Genetic_DE_solver/src/testenv.jl, in expression starting on line 64
+
+
 
 """
     init_indi(de, bc, ival[, flist, header_operators, head, head_l, tail, tail_l, dict])

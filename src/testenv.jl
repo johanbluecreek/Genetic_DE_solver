@@ -57,11 +57,9 @@ if isdefined(:GDES_loaded)
         test_elist = init_elist()
         test_gene = init_gene()
         test_chromo = init_chromo()
-        test_chromo1 = init_chromo()
-        test_chromo2 = init_chromo()
+        test_chromo1, test_chromo2 = init_chromo(), init_chromo()
         test_indi = init_indi(test_de, test_bc, test_ival)
-        test_indi1 = init_indi(test_de, test_bc, test_ival)
-        test_indi2 = init_indi(test_de, test_bc, test_ival)
+        test_indi1, test_indi2 = init_indi(test_de, test_bc, test_ival), init_indi(test_de, test_bc, test_ival)
 
         test_pop = gen_pop(5, test_de, test_bc, test_ival)
     else

@@ -2,6 +2,15 @@
 # Mutation functions
 ############
 
+# Description
+# Main function is
+#  mutate: acts on Chromosomes or Individuals, returns (copy of) the same.
+#   if Chomosome, Gene to be acted on is determined by mselchance
+#   if Individual, Chromosomes are selected by cselchance.
+# mutate calls specific method functions
+#  mut_$method: acts on Genes, returns (copy of) the same.
+#
+
 """
     mut_change(gene::Gene, mrate::Float64)
 
@@ -27,26 +36,28 @@ julia> mut_change(gene, 1.0)
 
 ```
 """
-function mut_change(gene::Gene, mrate::Float64)
-  new_elist = ""
-  for part in gene.elist
-    if rand() <= mrate
-      #XXX: This does not work great with global variables like this...
-      if string(part) in functions
-        new_elist *= rand(functions)
-      elseif string(part) in operators
-        new_elist *= rand(operators)
-      elseif string(part) in terminators
-        new_elist *= rand(terminators)
-      else
-        println("WARNING: '$part' not found in the lists 'functions', 'operators', nor 'terminators'. Nothing done.")
-        new_elist *= string(part)
-      end
-    else
-      new_elist *= string(part)
+function mut_change(genein::Gene, mrate::Float64)
+    gene = deepcopy(genein)
+    new_elist = ""
+    for part in gene.elist
+        if rand() <= mrate
+            #XXX: This does not work great with global variables like this...
+            if string(part) in functions
+                new_elist *= rand(functions)
+            elseif string(part) in operators
+                new_elist *= rand(operators)
+            elseif string(part) in terminators
+                new_elist *= rand(terminators)
+            else
+                println("WARNING: '$part' not found in the lists 'functions', 'operators', nor 'terminators'. Nothing done.")
+                new_elist *= string(part)
+            end
+        else
+            new_elist *= string(part)
+        end
     end
-  end
-  return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
+    gene.elist = new_elist
+    return reparse_gene(gene)
 end
 
 """
@@ -162,6 +173,12 @@ end
     mut_grow(gene::Gene)
 
 Grows a branch in a `Gene` expression tree from a terminator, and truncates from the end.
+
+Since the entry-lists are set to a fixed length (`head_l` + `tail_l`), growing cannot be
+done indefinetly in a controled way. Once the growth is taken beyond `head_l`, such that the
+expression is no longer garanteed to terminate, `mut_grow()` will remove non-terminators
+from the tail part of the entry list, and make it terminate. To avoid running into this
+slight erractic behaviour, increase `head_l` and `tail_l` accordingly.
 
 # Examples
 ```julia-repl
@@ -309,14 +326,14 @@ function mut_swap(genein::Gene, mrate::Float64)
 end
 
 """
-    mutate(input, mrate, mselchance, method)
+    mutate(input, mrate, mselchance, method[, cselchance])
 
 Mutates `input` using `method`.
 
 # Inputs
 
-The `input` can be either `Chromosome` or `Individual`, where for an individual all
-chromosome parts will be treated equally.
+The `input` can be either `Chromosome` or `Individual`, where for an individual Chromosomes
+will be selected for mutation depending on `cselchance`.
 
 # Methods
 
@@ -383,11 +400,15 @@ function mutate(inchromo::Chromosome, mrate::Float64=0.6, mselchance::Float64=0.
     end
 end
 
-function mutate(inindi::Individual, mrate::Float64=0.6, mselchance::Float64=0.2, method::String="change")
+function mutate(inindi::Individual, mrate::Float64=0.6, mselchance::Float64=0.2, method::String="change", cselchance::Float64=0.8)
     indi = deepcopy(inindi)
     new_clist = Chromosome[]
     for chromo in indi.clist
-        push!(new_clist, mutate(chromo, mrate, mselchance, method))
+        if rand() <= cselchance
+            push!(new_clist, mutate(chromo, mrate, mselchance, method))
+        else
+            push!(new_clist, chromo)
+        end
     end
     indi.clist = new_clist
     indi = reparse_indi(indi)
