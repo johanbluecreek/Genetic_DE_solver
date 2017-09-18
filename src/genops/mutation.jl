@@ -83,21 +83,21 @@ julia> mut_random(test_gene, .2)
 ```
 """
 function mut_random(gene::Gene, mrate::Float64=1.0)
-  new_elist = ""
-  iter = 1
-  for part in gene.elist
-    if rand() <= mrate
-      if iter <= gene.head_l
-        new_elist *= rand(gene.head)
-      else
-        new_elist *= rand(gene.tail)
-      end
-    else
-      new_elist *= string(part)
+    new_elist = ""
+    iter = 1
+    for part in gene.elist
+        if rand() <= mrate
+            if iter <= gene.head_l
+                new_elist *= rand(gene.head)
+            else
+                new_elist *= rand(gene.tail)
+            end
+        else
+            new_elist *= string(part)
+        end
+        iter += 1
     end
-    iter += 1
-  end
-  return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
+    return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
 end
 
 """
@@ -120,49 +120,49 @@ julia> mut_trunc(test_gene)
 ```
 """
 function mut_trunc(genein::Gene)
-  gene = deepcopy(genein)
+    gene = deepcopy(genein)
 
-  # Truncation only acts on genes with more than one branch
-  if length(gene.tree) == 3
-    return gene
-  end
-
-  branches = find( x -> x == '(', gene.tree)
-
-  # Select a random branch
-  b_start = rand(branches)
-  # construct the branch
-  i = b_start+1
-  level = 1
-  branch = "("
-  while level != 0
-    entry = gene.tree[i]
-    branch *= string(entry)
-    i += 1
-    if entry == '('
-      level += 1
-    elseif entry == ')'
-      level -= 1
+    # Truncation only acts on genes with more than one branch
+    if length(gene.tree) == 3
+        return gene
     end
-  end
 
-  # truncating something that is already a terminator is no use
-  if length(branch) == 3
-    return gene
-  end
+    branches = find( x -> x == '(', gene.tree)
 
-  # flatten it
-  branch = replace(replace(branch,"(",""),")","")
+    # Select a random branch
+    b_start = rand(branches)
+    # construct the branch
+    i = b_start+1
+    level = 1
+    branch = "("
+    while level != 0
+        entry = gene.tree[i]
+        branch *= string(entry)
+        i += 1
+        if entry == '('
+            level += 1
+        elseif entry == ')'
+            level -= 1
+        end
+    end
 
-  #XXX: Note that this might cause unwanted replacements
-  new_elist = replace(gene.elist, branch, rand(gene.tail))
+    # truncating something that is already a terminator is no use
+    if length(branch) == 3
+        return gene
+    end
 
-  # Pad it to cannonical length
-  while length(new_elist) < length(gene.elist)
-    new_elist *= string(rand(gene.tail))
-  end
+    # flatten it
+    branch = replace(replace(branch,"(",""),")","")
 
-  return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
+    #XXX: Note that this might cause unwanted replacements
+    new_elist = replace(gene.elist, branch, rand(gene.tail))
+
+    # Pad it to cannonical length
+    while length(new_elist) < length(gene.elist)
+        new_elist *= string(rand(gene.tail))
+    end
+
+    return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
 end
 
 function mut_trunc(genein::Gene, mrate::Float64)
@@ -195,53 +195,53 @@ julia> mut_grow(test_gene)
 ```
 """
 function mut_grow(genein::Gene)
-  gene = deepcopy(genein)
+    gene = deepcopy(genein)
 
-  # Find a terminator that is to be replaced by a tree
-  termins = find( x -> string(x) in gene.tail, gene.tree)
-  pos = rand(termins)
+    # Find a terminator that is to be replaced by a tree
+    termins = find( x -> string(x) in gene.tail, gene.tree)
+    pos = rand(termins)
 
-  # Make a new tree
-  #XXX: Can be a long loop... (but seems to work ok)
-  new_tree = ""
-  while length(new_tree) <= 3
-    new_tree = init_elist(gene.head, gene.head_l, gene.tail, gene.tail_l)
-    new_tree = parse_tree(new_tree)
-  end
-
-  # Insert new tree
-  new_elist = String[]
-  for i in 1:length(gene.tree)
-    if i == pos
-      push!(new_elist, new_tree)
-    else
-      push!(new_elist, string(gene.tree[i]))
+    # Make a new tree
+    #XXX: Can be a long loop... (but seems to work ok)
+    new_tree = ""
+    while length(new_tree) <= 3
+        new_tree = init_elist(gene.head, gene.head_l, gene.tail, gene.tail_l)
+        new_tree = parse_tree(new_tree)
     end
-  end
-  new_elist = string(new_elist...)
-  new_elist = replace(replace(new_elist,"(",""),")","")
 
-  # complete the elist
-  old_elist = replace(replace(gene.tree,"(",""),")","")
-  new_elist = replace(gene.elist, old_elist, new_elist)
-
-  # Make cannoncical length
-  new_elist = new_elist[1:length(gene.elist)]
-
-  # Make it safe
-  nnew_elist = ""
-  for i in 1:length(new_elist)
-    char = string(new_elist[i])
-    if char in gene.head && !(char in gene.tail) && i > gene.head_l
-      nnew_elist *= rand(gene.tail)
-    else
-      nnew_elist *= string(new_elist[i])
+    # Insert new tree
+    new_elist = String[]
+    for i in 1:length(gene.tree)
+        if i == pos
+            push!(new_elist, new_tree)
+        else
+            push!(new_elist, string(gene.tree[i]))
+        end
     end
-  end
-  new_elist = nnew_elist
+    new_elist = string(new_elist...)
+    new_elist = replace(replace(new_elist,"(",""),")","")
 
-  # return
-  return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
+    # complete the elist
+    old_elist = replace(replace(gene.tree,"(",""),")","")
+    new_elist = replace(gene.elist, old_elist, new_elist)
+
+    # Make cannoncical length
+    new_elist = new_elist[1:length(gene.elist)]
+
+    # Make it safe
+    nnew_elist = ""
+    for i in 1:length(new_elist)
+        char = string(new_elist[i])
+        if char in gene.head && !(char in gene.tail) && i > gene.head_l
+            nnew_elist *= rand(gene.tail)
+        else
+            nnew_elist *= string(new_elist[i])
+        end
+    end
+    new_elist = nnew_elist
+
+    # return
+    return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
 end
 
 function mut_grow(genein::Gene, mrate::Float64)
@@ -270,55 +270,55 @@ julia> mut_swap(gene)
 ```
 """
 function mut_swap(genein::Gene)
-  gene = deepcopy(genein)
-
-  # Find a operator that is to have its arguments swaped
-  ops = find( x -> string(x) in operators, gene.tree)
-  # return original if there are no operators
-  if length(ops) == 0
-    return gene
-  end
-  pos = rand(ops)
-  # construct first sub-tree
-  fts = pos+1
-  open = 1
-  c = fts+1
-  while open > 0
-    if gene.tree[c] == '('
-      open += 1
-    elseif gene.tree[c] == ')'
-      open -= 1
+    gene = deepcopy(genein)
+    
+    # Find a operator that is to have its arguments swaped
+    ops = find( x -> string(x) in operators, gene.tree)
+    # return original if there are no operators
+    if length(ops) == 0
+        return gene
     end
-    c += 1
-  end
-  fte = c-1
-  ft = gene.tree[fts:fte]
-  # construct second sub-tree
-  sts = fte+1
-  open = 1
-  c = sts+1
-  while open > 0
-    if gene.tree[c] == '('
-      open += 1
-    elseif gene.tree[c] == ')'
-      open -= 1
+    pos = rand(ops)
+    # construct first sub-tree
+    fts = pos+1
+    open = 1
+    c = fts+1
+    while open > 0
+        if gene.tree[c] == '('
+            open += 1
+        elseif gene.tree[c] == ')'
+            open -= 1
+        end
+        c += 1
     end
-    c += 1
-  end
-  ste = c-1
-  st = gene.tree[sts:ste]
-
-  newtree = gene.tree[1:pos]
-  newtree *= st
-  newtree *= ft
-  newtree *= gene.tree[c:end]
-
-  newtree = replace(replace(newtree,"(",""),")","")
-  origtree = replace(replace(gene.tree,"(",""),")","")
-  #XXX: This is may cause unwanted replacements
-  new_elist = replace(gene.elist, origtree, newtree)
-
-  return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
+    fte = c-1
+    ft = gene.tree[fts:fte]
+    # construct second sub-tree
+    sts = fte+1
+    open = 1
+    c = sts+1
+    while open > 0
+        if gene.tree[c] == '('
+            open += 1
+        elseif gene.tree[c] == ')'
+            open -= 1
+        end
+        c += 1
+    end
+    ste = c-1
+    st = gene.tree[sts:ste]
+    
+    newtree = gene.tree[1:pos]
+    newtree *= st
+    newtree *= ft
+    newtree *= gene.tree[c:end]
+    
+    newtree = replace(replace(newtree,"(",""),")","")
+    origtree = replace(replace(gene.tree,"(",""),")","")
+    #XXX: This is may cause unwanted replacements
+    new_elist = replace(gene.elist, origtree, newtree)
+    
+    return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
 end
 
 function mut_swap(genein::Gene, mrate::Float64)

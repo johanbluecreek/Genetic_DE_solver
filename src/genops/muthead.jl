@@ -113,11 +113,11 @@ function muth_combo(inchromo::Chromosome, mrate::Float64=0.6)
     chromo = deepcopy(inchromo)
     new_header = ""
     for part in chromo.header
-      if rand() <= mrate
-        new_header *= rand(operators)
-      else
-        new_header *= string(part)
-      end
+        if rand() <= mrate
+            new_header *= rand(operators)
+        else
+            new_header *= string(part)
+        end
     end
     chromo.header = new_header
     return reparse_chromo(chromo)

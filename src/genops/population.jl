@@ -28,20 +28,20 @@ julia> gen_pop(5, de, bc, ival)
 ```
 """
 function gen_pop(pop_size::Int, de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist, glen::Int=2, header_operators::Array{String,1}=header_operators, head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
-  pop = Individual[]
-  while length(pop) < pop_size
-    indi = init_indi(de, bc, ival, flist, glen, header_operators, head, head_l, tail, tail_l, dict)
-    same = false
-    for mem in pop
-      if eq_indi(indi, mem)
-        same = true
-      end
+    pop = Individual[]
+    while length(pop) < pop_size
+        indi = init_indi(de, bc, ival, flist, glen, header_operators, head, head_l, tail, tail_l, dict)
+        same = false
+        for mem in pop
+            if eq_indi(indi, mem)
+                same = true
+            end
+        end
+        if !same
+            push!(pop, indi)
+        end
     end
-    if !same
-      push!(pop, indi)
-    end
-  end
-  return pop
+    return pop
 end
 
 """
@@ -53,5 +53,5 @@ This is simply a short-hand for `sort(pop, by=x -> x.fitness)`.
 
 """
 function sort_pop(pop::Array{Individual,1})
-  return sort(pop, by=x -> x.fitness)
+    return sort(pop, by=x -> x.fitness)
 end

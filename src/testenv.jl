@@ -29,16 +29,16 @@ tail_l = 20;
 
 # Dictionary to translate operators and functions to expressions
 dict = Dict(
-  "+" => "(<expr>)+(<expr>)",
-  "-" => "(<expr>)-(<expr>)",
-  "*" => "(<expr>)*(<expr>)",
-  "/" => "(<expr>)/(<expr>)",
-  "s" => "sin(<expr>)",
-  "c" => "cos(<expr>)",
-  "l" => "log(<expr>)",
-  "e" => "exp(<expr>)",
-  "u" => "(<expr>)",
-  "p" => "pi"
+    "+" => "(<expr>)+(<expr>)",
+    "-" => "(<expr>)-(<expr>)",
+    "*" => "(<expr>)*(<expr>)",
+    "/" => "(<expr>)/(<expr>)",
+    "s" => "sin(<expr>)",
+    "c" => "cos(<expr>)",
+    "l" => "log(<expr>)",
+    "e" => "exp(<expr>)",
+    "u" => "(<expr>)",
+    "p" => "pi"
 );
 
 # Below we generate the necessary variables to run tests and examples in the docs
