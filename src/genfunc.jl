@@ -463,8 +463,17 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     end
 
     # Penalty (Boundary condition)
-    # XXX
     indi_penalty = 0
+    lambda = 100
+    for b in bc
+        indi_bcf = eval(parse("(" * join(map( x -> x[1] , b[2]),", ") * ")" * " -> " * parse_expr(b[1], indi_clist, flist)))
+        try
+            indi_penalty += abs(indi_bcf(map( x -> x[2] , b[2])...))
+        catch
+            indi_penalty += Inf
+        end
+    end
+    indi_penalty = lambda*indi_penalty
 
     # Shape-error (Higher derivative)
     # XXX

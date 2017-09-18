@@ -51,7 +51,10 @@ if isdefined(:GDES_loaded)
         test_expr = "-(<e>)+(<exx>)^2+(<eyy>)^2"
         test_exprs = ["-(<f1>)+(<f2>)+(<f1xx>)^2+(<f1yy>)^2", "(<f1>)-(<f2>)+(<f2xx>)^2+(<f2yy>)^2"]
         test_de = test_exprs
-        test_bc = [1]
+        test_bc = [
+            ["(<f1x>) - y", [("x", 0.1), ("y", 0.2)]],
+            ["(<f1y>) - x", [("x", 0.2), ("y", 0.3)]]
+        ]
         test_ival = [(0.1,1.0), (0.2,1.1)]
 
         test_elist = init_elist()
