@@ -6,7 +6,7 @@
 # Main function is
 #  crossover: acts on Chromosomes or Individuals, returns (copy of) the same.
 # crossover calls specific method functions
-#  ...
+#  cross_$method
 #
 
 """
