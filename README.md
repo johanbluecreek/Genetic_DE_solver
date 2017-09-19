@@ -56,7 +56,7 @@ There are several mutation operators implemented, and they are divided in two pa
 
 ### Crossover
 
-(To be implemented for system)
+There are some crossover operators implemented. These are interactions between `Individual`s such that they produce new solutions as offspring. See `?crossover` for more information.
 
 ### Fitness calculation
 
@@ -78,29 +78,37 @@ The sub-expression number `m` is independent of any details of the problem, and 
 
 ## Usage
 
-At the present time, the documentation is the code, unfortunately. But having Julia installed properly, one can execute the files under `tests/` using `julia` to try it out.
+At the present time, the documentation is the code, unfortunately. But having Julia installed properly, one can execute the files under `tests/` using `julia` to try it out. This will also tell you what packages you are missing (that is, requirements), but this should be it:
+
+ * Calculus
+ * Iterators
+
+install with running `Pkg.add()` in `julia`.
 
 ## Contributing
 
 Any contribution would be appreciated, you can start off small, e.g.
 
-* Write the files for any of the differential equation in **[TL]** (note, systems and PDEs have not yet been fully implemented, hence syntax not yet fixed)
+* Write the files for any of the differential equation in **[TL]**.
 
 try it out and tune it, e.g.
 
-* Find out optimal settings for mutation (rate, selection, sizes, operations), crossover, etc. for the different differential equations, for example ode3.jl.
+* Find out optimal settings for mutation (rate, selection, sizes, operations), crossover, etc. for the different differential equations, for example `ode3.jl`.
 
 or help developing, for example
 
 * See the TODO below
 * Read TODO, XXX, and FIXME comments in the code
-* Highest priority right now is implmenting support for systems of differential equations. Follow development in branch 'system'
 
 ## Repository content
 
 * `odes/`: Folder for ODE:s from **[TL]**.
+* `pdes/`: Folder for PDE:s from **[TL]** and others.
 * `tests/`: Folder for testing various aspects of the code.
-* `de_package.jl`: File containing the types, functions, and genetic operators.
+* `src/`: Source files.
+* `src/GeneticDESolver.jl`: Main file that makes all functions available. Type `include("src/GeneticDESolver.jl")` to load.
+* `src/genops/`: Genetic operators.
+* `src/testenv.jl`: Small test environment to test out different features. Load with `include("src/GeneticDESolver.jl"); include("src/testenv.jl")`.
 
 ## TODO/Known issues
 
@@ -108,11 +116,12 @@ Crude TODO-list/feature wish-list
 
 * Implement the rest of the crossover operators listed in **[MF]** and **[E]**
 * Also implement their parent-selection methods
-* Add support for systems of differential equations (see branch 'system')
-* Add support for PDE:s (see branch 'partial', and 'system')
 * Add the rest of the differential equations in **[TL]**
 * Document functions and code
+* Find optimal settings for solving the differential equations of **[TL]**.
+* Make a pedagogical introduction in a jupyter-notebook for how all this works.
 
 Known issues
 
-* It still does not solve all ODE:s (e.g. `ode3`) in reasonable time (if at all).
+* There is a problem, visible in for example test_everything_parallel.jl, that it takes longer and longer time to complete one iteration as it is progressing. There is also memory leaks for this file.
+* The code does not exit gracefully on `Ctrl+c`: It will eat up your `/var` file-system. Try to avoid running code that you are not sure will finish in reasonable time.
