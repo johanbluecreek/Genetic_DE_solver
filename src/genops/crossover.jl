@@ -118,9 +118,9 @@ function cross_1point(chromoin1::Chromosome, chromoin2::Chromosome, gselchance::
     chromo1, chromo2 = deepcopy(chromoin1), deepcopy(chromoin2)
     for g in 1:length(chromo1.glist)
         if rand() <= gselchance
-            rnd = rand(length(chromo1.glist[1].elist))
-            new_elist1 = chromo1.glist[g].elist[1:rnd] * chromo2.glist[g].elist[rnd+1:end]
-            new_elist2 = chromo2.glist[g].elist[1:rnd] * chromo1.glist[g].elist[rnd+1:end]
+            rnd = rand(1:length(chromo1.glist[1].elist))
+            new_elist1 = (chromo1.glist[g]).elist[1:rnd] * (chromo2.glist[g]).elist[(rnd+1):end]
+            new_elist2 = (chromo2.glist[g]).elist[1:rnd] * (chromo1.glist[g]).elist[(rnd+1):end]
             chromo1.glist[g].elist = new_elist1
             chromo2.glist[g].elist = new_elist2
             chromo1.glist[g] = reparse_gene(chromo1.glist[g])
@@ -249,4 +249,24 @@ function crossover(chromoin1::Chromosome, chromoin2::Chromosome, gselchance::Flo
         println("WARNING: No support for method: '$method'. Nothing done.")
         return chromo1, chromo2
     end
+end
+
+function crossover(indiin1::Individual, indiin2::Individual, gselchance::Float64=0.8, method = "safe1point", cselchance::Float64=0.8)
+    indi1, indi2 = deepcopy(indiin1), deepcopy(indiin2)
+    new_clist1 = Chromosome[]
+    new_clist2 = Chromosome[]
+    for c in length(indi1.clist)
+        if rand() < cselchance
+            c1, c2 = crossover(indi1.clist[c], indi2.clist[c], gselchance, method)
+            push!(new_clist1, c1)
+            push!(new_clist2, c2)
+        else
+            push!(new_clist1, indi1.clist[c])
+            push!(new_clist2, indi2.clist[c])
+        end
+    end
+    indi1.clist = new_clist1
+    indi2.clist = new_clist2
+
+    return reparse_indi(indi1), reparse_indi(indi2)
 end

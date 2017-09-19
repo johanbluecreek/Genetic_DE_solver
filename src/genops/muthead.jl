@@ -166,3 +166,17 @@ function muthead(inchromo::Chromosome, mrate::Float64=0.6, method::String="jump"
         return chromo
     end
 end
+
+function muthead(inindi::Individual, mrate::Float64=0.6, method::String="jump", cselchance::Float64=0.8)
+    indi = deepcopy(inindi)
+    new_clist = Chromosome[]
+    for chromo in indi.clist
+        if rand() < cselchance
+            push!(new_clist, muthead(chromo, mrate, method))
+        else
+            push!(new_clist, chromo)
+        end
+    end
+    indi.clist = new_clist
+    return reparse_indi(indi)
+end
