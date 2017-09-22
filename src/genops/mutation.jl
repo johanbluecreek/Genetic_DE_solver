@@ -271,7 +271,7 @@ julia> mut_swap(gene)
 """
 function mut_swap(genein::Gene)
     gene = deepcopy(genein)
-    
+
     # Find a operator that is to have its arguments swaped
     ops = find( x -> string(x) in operators, gene.tree)
     # return original if there are no operators
@@ -307,17 +307,17 @@ function mut_swap(genein::Gene)
     end
     ste = c-1
     st = gene.tree[sts:ste]
-    
+
     newtree = gene.tree[1:pos]
     newtree *= st
     newtree *= ft
     newtree *= gene.tree[c:end]
-    
+
     newtree = replace(replace(newtree,"(",""),")","")
     origtree = replace(replace(gene.tree,"(",""),")","")
     #XXX: This is may cause unwanted replacements
     new_elist = replace(gene.elist, origtree, newtree)
-    
+
     return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
 end
 
@@ -371,7 +371,7 @@ function mutate(inchromo::Chromosome, mrate::Float64=0.6, mselchance::Float64=0.
     chromo = deepcopy(inchromo)
     methods = ["change", "swap", "grow", "trunc", "random"]
     if method in methods
-        if length(chromo.glist) == 1 #XXX: Not been tested yet!
+        if length(chromo.glist) == 0 #XXX: Not been tested yet!
             ee = "mut_$method"
             ee = eval(parse(ee))
             Gene[ee(chromo.glist[1], mrate)]

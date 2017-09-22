@@ -120,8 +120,10 @@ Crude TODO-list/feature wish-list
 * Document functions and code
 * Find optimal settings for solving the differential equations of **[TL]**.
 * Make a pedagogical introduction in a jupyter-notebook for how all this works.
+* I should read [the documentation on metaprogramming and rewrite a lot of the code](https://docs.julialang.org/en/latest/manual/metaprogramming/).
 
 Known issues
 
 * There is a problem, visible in for example test_everything_parallel.jl, that it takes longer and longer time to complete one iteration as it is progressing. There is also memory leaks for this file.
 * The code does not exit gracefully on `Ctrl+c`: It will eat up your `/var` file-system. Try to avoid running code that you are not sure will finish in reasonable time.
+* The code has been tested with Julia 0.5.2-pre where it works. Julia 0.6.0 is stricter with how generated functions work, and what I have in `gen_indi()` will not work.

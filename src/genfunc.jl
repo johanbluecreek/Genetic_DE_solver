@@ -445,6 +445,9 @@ julia>
 ```
 """
 function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist)
+    # FIXME: The function generation I made here is not compatible with versions of julia >0.5,
+    # and programmers would probably laugh or get a headache (or worse) from looking at the below.
+
     # Error (Differential equation)
     ## Differential equation as a function (sum of squares)
     indi_def = parse_expr(de, indi_clist, flist)
@@ -468,7 +471,7 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     for b in bc
         indi_bcf = eval(parse("(" * join(map( x -> x[1] , b[2]),", ") * ")" * " -> " * parse_expr(b[1], indi_clist, flist)))
         try
-            indi_penalty += abs(indi_bcf(map( x -> x[2] , b[2])...))
+            indi_penalty += (indi_bcf(map( x -> x[2] , b[2])...))^2
         catch
             indi_penalty += Inf
         end
