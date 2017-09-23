@@ -55,14 +55,15 @@ Types representing complete solutions to systems of differential equations.
 """
 type Individual
     clist::Array{Chromosome,1}  # List of Chromosomes
+    #FIXME: Remove this (it doesn't work, and is not very useful anyway):
     def::Function               # Function to evaluate the de
-    
+
     # Fitness and its components
     error::Float64
     penalty::Float64
     shape::Float64
     fitness::Float64
-    
+
     # For save
     de::Array{String,1}
     bc::Array{Any,1}

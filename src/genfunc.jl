@@ -445,33 +445,42 @@ julia>
 ```
 """
 function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist)
-    # FIXME: The function generation I made here is not compatible with versions of julia >0.5,
-    # and programmers would probably laugh or get a headache (or worse) from looking at the below.
 
     # Error (Differential equation)
-    ## Differential equation as a function (sum of squares)
-    indi_def = parse_expr(de, indi_clist, flist)
-    indi_def = *(map(x-> " + ($x)^2", indi_def)...)
-    indi_def = "(" * join(vars, ",") * ") -> " * indi_def
-    indi_def = eval(parse(indi_def))
     ## Set up domain
     dom = map(x -> linspace(x...,10), ival)
     dom = product(dom...)
+
+    ## Differential equation as a function (sum of squares)
+    indi_def = parse_expr(de, indi_clist, flist)
+    indi_def = *(map(x-> " + ($x)^2", indi_def)...)
+
+    # Define `defunc`
+    f_body = parse(indi_def)
+    f_call = Expr(:call,:defunc,map(parse, vars)...)
+    # eval(Expr(:function,f_call,f_body))
+    eval(Expr(:function,f_call,f_body))
+
     ## Calculate error (try/catch to avoid DomainError)
     indi_error = Inf
     try
-        indi_error = +(map(x -> indi_def(x...), dom)...)
+        indi_error = +(map(x -> Base.invokelatest(defunc, x...), dom)...)
     catch
         indi_error = Inf
     end
+    # XXX: Would be nice to be able to avoid `Base.invokelatest` here.
 
     # Penalty (Boundary condition)
     indi_penalty = 0
     lambda = 100
     for b in bc
-        indi_bcf = eval(parse("(" * join(map( x -> x[1] , b[2]),", ") * ")" * " -> " * parse_expr(b[1], indi_clist, flist)))
+        # define bcfunc
+        indi_bcf = parse_expr(b[1], indi_clist, flist)
+        f_body = parse(indi_bcf)
+        f_call = Expr(:call,:bcfunc,map(parse, vars)...)
+        eval(Expr(:function,f_call,f_body))
         try
-            indi_penalty += (indi_bcf(map( x -> x[2] , b[2])...))^2
+            indi_penalty += (Base.invokelatest(bcfunc, map( x -> x[2] , b[2])...))^2
         catch
             indi_penalty += Inf
         end
@@ -486,7 +495,7 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     indi_fitness = indi_error + indi_penalty + indi_shape
 
     # Return
-    return indi_def, indi_error, indi_penalty, indi_shape, indi_fitness, de, bc, ival
+    return defunc, indi_error, indi_penalty, indi_shape, indi_fitness, de, bc, ival
 end
 
 

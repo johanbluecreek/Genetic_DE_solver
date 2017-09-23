@@ -14,11 +14,11 @@ digits = vcat(["$i" for i=range(0,10)]);
 
 # Even though ode1 only depends on 'x', [TL] uses 'x', 'y' and 'z' in their grammar
 # so lets redefine the 'vars' present in 'ode1.jl'
-vars = ["x", "y", "z"]
+#vars = ["x", "y", "z"]
 # which also means we need to redefine ival and bc
-bc = [["(<e>) - 20.1", [("x", 0.1), ("y", 0.0), ("z", 0.0)]]]
-ival = [(0.1,1.0), (0.0, 0.0), (0.0, 0.0)]
-
+#bc = [["(<e>) - 20.1", [("x", 0.1), ("y", Inf), ("z", Inf)]]]
+#ival = [(0.1,1.0), (Inf, Inf), (Inf, Inf)]
+#XXX: Not using this since it makes it _really_ slow.
 
 # This is just a list of what should be considered terminators. Distribution does not matter
 # (that is, vcat(digits, vars) will not be different from vcat(digit, vars, vars))
@@ -63,9 +63,7 @@ dict = Dict(
 
 # [TL] has population size 1000, termination at 2000 itrations or 10.0^(-7) accuracy
 pop_size = 1000
-#XXX: In 0.5 Interrupt is not handled well, so set `stop` low enough so that it finishes
-# in ok time:
-stop = 100
+stop = 2000
 sens = 10.0^(-7)
 
 pop = gen_pop(pop_size, de, bc, ival, flist, glen, header_operators, head, head_l, tail, tail_l, dict)
@@ -78,7 +76,6 @@ for i in 1:length(pop)
         end
     end
 end
-
 
 pop = sort_pop(pop)
 
