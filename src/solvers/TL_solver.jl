@@ -5,8 +5,8 @@
 # similar performance to the results of that paper.
 ###
 
-include("./../../src/GeneticDESolver.jl")
-include("./../ode1.jl")
+include("./../GeneticDESolver.jl")
+include("./../../odes/ode1.jl")
 
 functions = ["s", "c", "e", "l"];
 operators = ["+", "-", "*", "/"];
