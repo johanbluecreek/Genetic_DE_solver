@@ -42,12 +42,13 @@ tail = vcat(digits, repeat(vars, outer=10));
 # [TL] states that they use fixed length, although they do not specify how they fix the
 # length, here we take the fixed length to be in terms of head_l, and we set the tail to be
 # made out of head, having removed operators, unitary operator, and functions.
-head_l = 50;
-tail_l = 100;
+head_l = 10;
+tail_l = 2*head_l;
 #XXX: Read about "wrapping events"
+#XXX: No! Only need to be head_l+1 (?)
 
 # [TL] does not have their expression composed of several genes in this sense.
-glen = 1
+glen = 2
 
 dict = Dict(
     "+" => "(<expr>)+(<expr>)",
@@ -62,8 +63,8 @@ dict = Dict(
 );
 
 # [TL] has population size 1000, termination at 2000 itrations or 10.0^(-7) accuracy
-pop_size = 1000
-stop = 2000
+pop_size = 10
+stop = 20
 sens = 10.0^(-7)
 
 pop = gen_pop(pop_size, de, bc, ival, flist, glen, header_operators, head, head_l, tail, tail_l, dict)
@@ -159,6 +160,7 @@ end
 println("Done!")
 println("Solution: ", pop[1])
 println("Found in $iter iterations, and $(time()-start) seconds.")
+
 
 # Running this you should have something similar as
 # Min | Max  | Avg.
