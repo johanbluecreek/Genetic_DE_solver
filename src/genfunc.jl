@@ -39,6 +39,31 @@ function safe_string(instring::String)
     return instring
 end
 
+"""
+    protect(instring[, m])
+
+Protects a string from variable substitution.
+"""
+function protect(instring, m=true)
+    retstring = instring
+    if m
+        retstring = replace(retstring, "exp", "EXP")
+        retstring = replace(retstring, "log", "LOG")
+        retstring = replace(retstring, "sin", "SIN")
+        retstring = replace(retstring, "cos", "COS")
+    else
+        retstring = replace(retstring, "EXP", "exp")
+        retstring = replace(retstring, "LOG", "log")
+        retstring = replace(retstring, "SIN", "sin")
+        retstring = replace(retstring, "COS", "cos")
+    end
+    return retstring
+end
+
+function unprotect(instring)
+    protect(instring, false)
+end
+
 ########################
 # "elist"-functions
 ########################
@@ -167,6 +192,9 @@ function parse_tree(elist::String=init_elist())
             end
         end
         iterator += 1
+        if iterator == 100
+            println("Error: parse_tree: endless loop?")
+        end
     end
     return tree
 end
@@ -445,6 +473,7 @@ julia>
 ```
 """
 function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist)
+    #XXX: A lot of time is spent here. Make sure it is optimized as far as possible.
 
     # Error (Differential equation)
     ## Set up domain
@@ -452,6 +481,80 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     dom = product(dom...)
 
     ## Differential equation as a function (sum of squares)
+
+    exprs = parse_expr(de, indi_clist, flist)
+    nexprs = Float64[]
+
+    for e in 1:length(exprs)
+
+        expr = exprs[e]
+        expr = protect(expr)
+
+        repall = expr
+        for i in 1:length(vars)
+            repall = Expr(:call, :replace, repall, vars[i], :(mapvar[$i]))
+        end
+        repall = Expr(:->, :mapvar, repall)
+        repall = eval(repall)
+        expr = map(a -> Base.invokelatest(repall, a), tuple(dom...))
+        expr = map(unprotect, expr)
+        try
+            expr = map(x -> eval(parse(x)), expr)
+            expr = map(x -> x^2, expr)
+            expr = sum(expr)
+        catch
+            expr = Inf
+        end
+
+        push!(nexprs, expr)
+
+    end
+
+    indi_error = sum(nexprs)
+
+
+    #=
+    indi_error = map(a -> Base.invokelatest(repall, a), tuple(dom...))
+    println(indi_error)
+    =#
+
+    #XXX Get the expression on string form
+    #XXX protect the functions names: exp -> EXP replacements for instance
+    #XXX have a recursive for loop, that eats all in var...
+    #=
+        function repall(vars)
+           if length(vars) > 1
+               return Expr(:call, :replace, :expr, parse(vars[1]), :(x[1]))
+           else
+               return Expr(:call, :replace, :expr, :(vars[1]), :(x[1]))
+            ...
+    XXX: Figure it our clever boy
+
+    This should be it:
+
+    map( x -> replace(replace x[1]) x[2], dom) build replace with recursion.
+
+    =#
+
+    #=
+    expr = parse_expr(de, indi_clist, flist)
+    expr = *(map(x-> " + ($x)^2", expr)...)
+    expr = parse(expr)
+
+    erfunc = Expr(:->, Expr(:tuple, (map(parse, vars))...), expr)
+    erfunc = eval(erfunc)
+
+    indi_error = Inf
+    try
+        indi_error = +(map(x -> Base.invokelatest(erfunc, x...), dom)...)
+    catch
+        indi_error = Inf
+    end
+
+    erfunc = nothing
+    =#
+
+    #=
     indi_def = parse_expr(de, indi_clist, flist)
     indi_def = *(map(x-> " + ($x)^2", indi_def)...)
 
@@ -469,9 +572,11 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
         indi_error = Inf
     end
     # XXX: Would be nice to be able to avoid `Base.invokelatest` here.
+    =#
 
     # Penalty (Boundary condition)
     indi_penalty = 0
+    #=
     lambda = 100
     for b in bc
         # define bcfunc
@@ -486,6 +591,7 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
         end
     end
     indi_penalty = lambda*indi_penalty
+    =#
 
     # Shape-error (Higher derivative)
     # XXX
@@ -495,7 +601,7 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     indi_fitness = indi_error + indi_penalty + indi_shape
 
     # Return
-    return defunc, indi_error, indi_penalty, indi_shape, indi_fitness, de, bc, ival
+    return indi_error, indi_penalty, indi_shape, indi_fitness, de, bc, ival
 end
 
 
