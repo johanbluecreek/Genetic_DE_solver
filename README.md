@@ -4,6 +4,17 @@ This is a differential equations solver that finds analytical solutions using ge
 
 Compared to [GP_DE_solver (development halted)](https://github.com/johanbluecreek/GP_DE_solver) written in Python, this is faster, more reliable, have more genetic operators implemented, and uses a parse-tree sort of structure rather than a grammar.
 
+## WARNING:
+
+This code generates functions that evaluates a solutions fitness. Julia has a bug where this causes memory leaks, and ever increasing slowdown of execution. See
+
+* [julia/issues/19013](https://github.com/JuliaLang/julia/issues/19013)
+* [julia/issues/18446](https://github.com/JuliaLang/julia/issues/18446)
+* [julia/issues/14495](https://github.com/JuliaLang/julia/issues/14495)
+* ... and possibly references within the comments.
+
+Until those are fixed, this project is more or less dead. It is still functional, but use it only for small projects (small systems, small populations, few iterations before termination, &c.).
+
 ## Introduction
 
 The inspiration for this project is taken from
