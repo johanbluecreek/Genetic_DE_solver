@@ -460,6 +460,37 @@ end
 # Individual functions
 ########################
 
+#XXX: This makes it waaaaay slower than just having it built into gen_indi
+#XXX: Make this work for strings...
+function gen_func(expr::Array{String,1}, vars, method="anon")
+    methods = ["anon", "named", "subs"]
+    if method in methods
+        if method == "anon"
+            expr = *(map(x-> " + ($x)^2", expr)...)
+            expr = parse(expr)
+            thefunc = Expr(:->, Expr(:tuple, (map(parse, vars))...), expr)
+            thefunc = eval(thefunc)
+            return thefunc
+        elseif method == "named"
+            println("not implemented yet")
+            return x -> Inf
+        elseif method == "subs"
+            println("not implemnted yet")
+            return x -> Inf
+        else
+            println("Warn: No method '$method'.")
+            return x -> Inf
+        end
+    end
+    return x -> Inf
+end
+#XXX: and this one for array of strings, to make it work for de and bc.
+#=
+function gen_func(exprs::Array{String,1}, vars, method="anon")
+    return map(x -> gen_func(x, vars, method), exprs)
+end
+=#
+
 #XXX: Add example below
 """
     gen_indi(clist, de, bc, ival[, length, flist, header_operators, head, head_l, tail, tail_l, dict])
@@ -482,6 +513,17 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
 
     ## Differential equation as a function (sum of squares)
 
+    exprs = parse_expr(de, indi_clist, flist)
+    erfunc = gen_func(exprs, vars)
+    indi_error = Inf
+    try
+        indi_error = +(map(x -> Base.invokelatest(erfunc, x...), dom)...)
+    catch
+        indi_error = Inf
+    end
+
+    #XXX: Substitution:
+    #=
     exprs = parse_expr(de, indi_clist, flist)
     nexprs = Float64[]
 
@@ -511,7 +553,7 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     end
 
     indi_error = sum(nexprs)
-
+    =#
 
     #=
     indi_error = map(a -> Base.invokelatest(repall, a), tuple(dom...))
@@ -536,6 +578,7 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
 
     =#
 
+    #XXX: anon function:
     #=
     expr = parse_expr(de, indi_clist, flist)
     expr = *(map(x-> " + ($x)^2", expr)...)
