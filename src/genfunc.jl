@@ -1,4 +1,6 @@
 
+push!(Libdl.DL_LOAD_PATH,"./")
+
 ################################################
 #
 # Functions
@@ -466,11 +468,20 @@ function gen_func(expr::Array{String,1}, vars, method="anon")
     methods = ["anon", "named", "subs"]
     if method in methods
         if method == "anon"
-            expr = *(map(x-> " + ($x)^2", expr)...)
-            expr = parse(expr)
-            thefunc = Expr(:->, Expr(:tuple, (map(parse, vars))...), expr)
-            thefunc = eval(thefunc)
-            return thefunc
+            expr = *(map(x-> "($x)^2", expr)...)
+            # Here we have a string expression that we could pass to the rust library
+            # well, we need to clean it up for rust a bit first
+            expr = replace(expr, "Inf", "0.0/0.0")
+            expr = safe_string(expr)
+            # println(expr)
+            y = ccall((:evalexpr,"libmeval_caller"),Float64,(Cstring,), expr)
+            # println(y)
+            # that is good enough for now... lets see.
+#            expr = parse(expr)
+#            thefunc = Expr(:->, Expr(:tuple, (map(parse, vars))...), expr)
+#            thefunc = eval(thefunc)
+#            return thefunc
+            return x -> Inf
         elseif method == "named"
             println("not implemented yet")
             return x -> Inf

@@ -120,6 +120,7 @@ Crude TODO-list/feature wish-list
 * Document functions and code
 * Find optimal settings for solving the differential equations of **[TL]**.
 * Make a pedagogical introduction in a jupyter-notebook for how all this works.
+* Use the build in meta-programming features in Julia more.
 
 Known issues
 
