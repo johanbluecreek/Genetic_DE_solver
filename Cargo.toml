@@ -5,7 +5,7 @@ authors = ["Johan Blåbäck <johan_bluecreek@riseup.net>"]
 
 [lib]
 name = "mevac"
-crate-type = "dylib"
+crate-type = ["dylib"]
 
 [dependencies]
 meval = "0.1"
