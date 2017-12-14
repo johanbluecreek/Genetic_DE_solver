@@ -1,6 +1,8 @@
-/**********************
+/*********************
+****** libmevac ******
+**********************
 Rust library to speed up fitness evaluation, and circumvent Julia bugs.
-**********************/
+*********************/
 extern crate meval;
 
 use std::ffi::CStr;

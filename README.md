@@ -1,19 +1,6 @@
 # Genetic DE solver
 
-This is a differential equations solver that finds analytical solutions using genetic programming. This is written in [Julia](https://github.com/JuliaLang/julia) and relies on the [Calculus](https://github.com/johnmyleswhite/Calculus.jl) package for symbolic derivatives.
-
-Compared to [GP_DE_solver (development halted)](https://github.com/johanbluecreek/GP_DE_solver) written in Python, this is faster, more reliable, have more genetic operators implemented, and uses a parse-tree sort of structure rather than a grammar.
-
-## WARNING:
-
-This code generates functions that evaluates a solutions fitness. Julia has a bug where this causes memory leaks, and ever increasing slowdown of execution. See
-
-* [julia/issues/19013](https://github.com/JuliaLang/julia/issues/19013)
-* [julia/issues/18446](https://github.com/JuliaLang/julia/issues/18446)
-* [julia/issues/14495](https://github.com/JuliaLang/julia/issues/14495)
-* ... and possibly references within the comments.
-
-Until those are fixed, this project is more or less dead. It is still functional, but use it only for small projects (small systems, small populations, few iterations before termination, &c.).
+This is a differential equations solver that finds analytical solutions using genetic programming. This is written in [Julia](https://github.com/JuliaLang/julia) and relies on the [Calculus](https://github.com/johnmyleswhite/Calculus.jl) package for symbolic derivatives, and fitness is calculated with the help of [meval-rs](https://github.com/rekka/meval-rs), a [Rust](https://www.rust-lang.org) library.
 
 ## Introduction
 
@@ -89,12 +76,20 @@ The sub-expression number `m` is independent of any details of the problem, and 
 
 ## Usage
 
-At the present time, the documentation is the code, unfortunately. But having Julia installed properly, one can execute the files under `tests/` using `julia` to try it out. This will also tell you what packages you are missing (that is, requirements), but this should be it:
+Usage documentation is very lacking at the moment. But, it has been tried on a machine with the following
 
- * Calculus
- * Iterators
+ * Julia v0.6.1
+ * Julia packages Calculus and Iterators installed (`Pkg.add()`)
+ * Rust v1.19.0
+ * Cargo v0.21.0
 
-install with running `Pkg.add()` in `julia`.
+The code is mostly Julia, however to circumvent some bugs in Julia there is a Rust library present that performs the fitness calculation. Before attempting to run any of the code, you should build that library
+
+```$ cargo build```
+
+from the root of this repository.
+
+To start solving differential equations, there is yet not much user-friendly instructions nor documentation, but you can take a look at `src/solvers/TL_solver.jl` to begin with. Just try to run it.
 
 ## Contributing
 
@@ -118,6 +113,7 @@ or help developing, for example
 * `tests/`: Folder for testing various aspects of the code.
 * `src/`: Source files.
 * `src/GeneticDESolver.jl`: Main file that makes all functions available. Type `include("src/GeneticDESolver.jl")` to load.
+* `src/lib.rs`: Rust library to assist fitness calculation.
 * `src/genops/`: Genetic operators.
 * `src/testenv.jl`: Small test environment to test out different features. Load with `include("src/GeneticDESolver.jl"); include("src/testenv.jl")`.
 
@@ -131,7 +127,3 @@ Crude TODO-list/feature wish-list
 * Document functions and code
 * Find optimal settings for solving the differential equations of **[TL]**.
 * Make a pedagogical introduction in a jupyter-notebook for how all this works.
-
-Known issues
-
-* There is a problem, visible in for example test_everything_parallel.jl, that it takes longer and longer time to complete one iteration as it is progressing. There is also memory leaks for this file.

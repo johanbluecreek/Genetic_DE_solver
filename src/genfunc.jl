@@ -1,4 +1,8 @@
 
+# Path to rust library relative this file.
+libpath = *(@__DIR__,"/../target/debug/")
+push!(Libdl.DL_LOAD_PATH,libpath)
+
 ################################################
 #
 # Functions
@@ -451,28 +455,57 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     dom = map(x -> linspace(x...,10), ival)
     dom = product(dom...)
 
-    ## Differential equation as a function (sum of squares)
+    ## Plug in the expressions in all differential equations and form a sum-of-squares
     indi_def = parse_expr(de, indi_clist, flist)
-    indi_def = *(map(x-> " + ($x)^2", indi_def)...)
+    indi_def = *("(" * indi_def[1] * ")^2", map(x-> " + ($x)^2", indi_def[2:end])...)
 
-    # Define `defunc`
-    f_body = parse(indi_def)
-    f_call = Expr(:call,:defunc,map(parse, vars)...)
-    # eval(Expr(:function,f_call,f_body))
-    eval(Expr(:function,f_call,f_body))
+    ## Clean it up for rust/meval
+    # silly silly rust using /wrong/ notation
+    indi_def = replace(indi_def, "log", "ln")
+    # make raname `Inf` for rust
+    indi_def = replace(indi_def, "Inf", "1/0.0")
+    indi_def = replace(indi_def, "NaN", "0.0/0.0")
+    # remove juxtaposed expressions
+    indi_def = safe_string(indi_def)
+    #FIXME: Remove the use of `defunc` everywhere!
+    defunc = x -> x
 
-    ## Calculate error (try/catch to avoid DomainError)
-    indi_error = Inf
-    try
-        indi_error = +(map(x -> Base.invokelatest(defunc, x...), dom)...)
-    catch
-        indi_error = Inf
+    # Prepare for mevac calls
+    len = length(vars)
+    mevac_vars = map(x -> Base.unsafe_convert(Cstring, Base.cconvert(Cstring, x)), vars)
+
+    # mevac calls
+    indi_error = 0
+    for pt in dom
+        indi_error += ccall(
+            (:evalpt,"libmevac"),
+            Float64,
+            (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
+            indi_def, mevac_vars, [pt...], len)
     end
-    # XXX: Would be nice to be able to avoid `Base.invokelatest` here.
 
     # Penalty (Boundary condition)
     indi_penalty = 0
     lambda = 100
+    for b in bc
+        indi_bcf = parse_expr(b[1], indi_clist, flist)
+        indi_bcf = "(" * indi_bcf * ")^2"
+        indi_bcf = replace(indi_bcf, "log", "ln")
+        indi_bcf = replace(indi_bcf, "Inf", "1/0.0")
+        indi_bcf = replace(indi_bcf, "NaN", "0.0/0.0")
+        indi_bcf = safe_string(indi_bcf)
+        #XXX: I'm lazy right now, just want to try for one example with one variable.
+        if len == 1
+            indi_penalty += ccall(
+                (:evalpt,"libmevac"),
+                Float64,
+                (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
+                indi_bcf, mevac_vars, [b[2][1][2]], len)
+        end
+    end
+    indi_penalty = lambda*indi_penalty
+    #XXX: Disabling while coupling fitness to libmevac
+    #=
     for b in bc
         # define bcfunc
         indi_bcf = parse_expr(b[1], indi_clist, flist)
@@ -485,6 +518,7 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
             indi_penalty += Inf
         end
     end
+    =#
     indi_penalty = lambda*indi_penalty
 
     # Shape-error (Higher derivative)

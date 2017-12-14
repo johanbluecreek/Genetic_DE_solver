@@ -34,7 +34,12 @@ header_operators = vcat(operators);
 # digits and variables would be vcat(digit, repeat(vars, outer=10)) making the variable
 # as likely as any digit.
 # This means, normalising using vars, or the unity operator, the correct head is
-head = vcat(repeat(operators, outer=5), repeat(["u"], outer=20), repeat(functions, outer=5), repeat(digits, outer=2), repeat(vars, outer=20));
+head = vcat(
+    repeat(operators, outer=5),
+    repeat(["u"], outer=20),
+    repeat(functions, outer=5),
+    repeat(digits, outer=2),
+    repeat(vars, outer=20));
 # This is not completely correct, since the random number chosen by [TL] is 0:255, which
 # will give an uneven distribution (due to modulus operations). I will not try and correct
 # for this here.
@@ -61,11 +66,12 @@ dict = Dict(
     "u" => "(<expr>)",
 );
 
-# [TL] has population size 1000, termination at 2000 itrations or 10.0^(-7) accuracy
+# [TL] has population size 1000, termination at 2000 iterations or 10.0^(-7) accuracy
 pop_size = 1000
 stop = 2000
 sens = 10.0^(-7)
 
+println("Generating population...")
 pop = gen_pop(pop_size, de, bc, ival, flist, glen, header_operators, head, head_l, tail, tail_l, dict)
 
 #Allow only sane expressions:
@@ -83,6 +89,7 @@ iter = 1
 
 start = time()
 
+println("Iterating...")
 while iter < stop && pop[1].fitness > sens
 
     part = time()
@@ -157,7 +164,11 @@ while iter < stop && pop[1].fitness > sens
 end
 
 println("Done!")
-println("Solution: ", pop[1])
+for p in pop
+    if p.fitness < sens
+        println(p)
+    end
+end
 println("Found in $iter iterations, and $(time()-start) seconds.")
 
 # Running this you should have something similar as
