@@ -24,8 +24,6 @@ digits = vcat(["$i" for i=range(0,10)]);
 # (that is, vcat(digits, vars) will not be different from vcat(digit, vars, vars))
 terminators = vcat(digits, vars);
 
-header_operators = vcat(operators);
-
 # The grammar of [TL] is different,
 # Chance to select any operator is equal to the chance of getting the unity operator,
 # any function, or any digit. However, the variables x, y, z also have that same chance.
@@ -48,11 +46,16 @@ tail = vcat(digits, repeat(vars, outer=10));
 # length, here we take the fixed length to be in terms of head_l, and we set the tail to be
 # made out of head, having removed operators, unitary operator, and functions.
 head_l = 50;
-tail_l = 100;
-#XXX: Read about "wrapping events"
+tail_l = 51;
 
-# [TL] does not have their expression composed of several genes in this sense.
-glen = 1
+# [TL] does not have their expression composed of several genes in this sense. But they do
+# have "wrapping events" that seems to be occuring when maximum length is reached. Hence
+# we will simulate this with allowing for two genes, but mostly 'z' operators allowed for
+# the header (which kills one gene, hence no wrapping)
+glen = 2
+header_operators = vcat(operators, repeat(["z"], outer=20));
+#XXX: No, this is no good either. If length of the active elements of a gene were visible,
+# then a mutation of the header could be triggered by that.
 
 dict = Dict(
     "+" => "(<expr>)+(<expr>)",
@@ -149,6 +152,8 @@ while iter < stop && pop[1].fitness > sens
 
     # Make the new population
     pop = vcat(m_pop, c_pop)
+    # Mutate head to simulate "wrapping"
+    pop = map(x -> muthead(x, 0.6, "combo", 0.8), pop)
 
     # And sort again
     pop = sort_pop(pop)
