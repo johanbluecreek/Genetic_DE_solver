@@ -91,6 +91,65 @@ from the root of this repository.
 
 To start solving differential equations, there is yet not much user-friendly instructions nor documentation, but you can take a look at `src/solvers/TL_solver.jl` to begin with. Just try to run it.
 
+## Status
+
+Here is an incomplete list of things that are/should be implemented.
+
+### Large scale stuff
+
+  * Meta-programming overhaul. ✗
+
+### Capabilities
+
+Overall capabilities
+
+|         | ODE | SODE          | PDE                 | SPDE       |
+|---------|:---:|:-------------:|:-------------------:|:----------:|
+| Works   |  ✓  |  ✓            |  ✗                  |  ✗         |
+| Problem |     |               | penalty-calculation | SODE + PDE |
+
+### Fitness and similar
+
+|         | ODE | SODE | PDE | SPDE |
+|---------|:---:|:----:|:---:|:----:|
+| Error   |  ✓  |  ✓   |  ?  |  ?   |
+| Penalty |  ✓  |  ✓   |  ✗  |  ✗   |
+| Shape   |  ✗  |  ✗   |  ✗  |  ✗   |
+
+✓ = implemented, ✗ = not implemented, ? = not tested or not intensionally implemented
+
+### Genetic operators
+
+Table of implemented methods for the genetic operators
+
+| `mutate` | `crossover` | `muthead`| `p_select`       |
+| -------- | ----------- | -------- | ---------------- |
+| change   | safe1point  | scramble | tournament       |
+| swap     | 1point      | jump     | random           |
+| grow     | 2point      | combo    |
+| trunc    | random      |
+| random   |
+
+You can find documentation on each function and references to documentation of each method by the name presented above on the first row.
+
+### Provided differential equations
+
+From **[TL]** the following differential equations are provided with this repository
+
+| ODE | NLODE | SODE | PDE  |
+| --- | ----- | ---- | ---- |
+| 1   |       |  1   | 1(✗) |
+| 3   |       |      |      |
+
+✗ = only partially provided.
+
+Other differential equations (no boundary conditions)
+
+| ODE | NLODE | SODE | PDE       | SPDE |
+| --- | ----- | ---- | --------- | ---- |
+|||| [Liouville](https://en.wikipedia.org/wiki/Liouville%27s_equation) ||
+
+
 ## Contributing
 
 Any contribution would be appreciated, you can start off small, e.g.

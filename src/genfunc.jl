@@ -364,6 +364,8 @@ julia> expr = "<ex>"; parse_expr(expr, chromo)
 
 ## System of "PDEs" (advanced example)
 
+WARN: This function does not handle systems correctly at this point.
+
 When `flist` is provided to `parse_expr()`, the default is overwritten and the given
 function names are used instead
 
@@ -392,32 +394,30 @@ julia> parse_expr(exprs, chromos, ["f1", "f2"])
 function parse_expr(expr::String, chromo::Chromosome)
     thestring = chromo.thestring
     regexp = r"(?<=(\<)).*?(?=\>)"
-    m = match(regexp, expr)
-    #while typeof(m) != Void
-    while (try m.match[1] == 'e' catch typeof(m) != Void; end)
-    name = m.match
-    sub = thestring
-    for var in name[2:end]
-        #XXX: You will be able to get an infinite loop here unless you use
-        # Calculus with https://github.com/johnmyleswhite/Calculus.jl/pull/107
-        try
-            sub = differentiate(sub, parse(string(var)))
-        catch
-            sub = "Inf"
+    m = matchall(regexp, expr)
+    for i in m
+        if i[1] == 'e'
+            sub = thestring
+            for var in i[2:end]
+                try
+                    sub = differentiate(sub, parse(string(var)))
+                catch
+                    sub = "Inf"
+                end
+            end
+            expr = replace(expr, "<" * i * ">", sub)
         end
-    end
-    expr = replace(expr, "<" * name * ">", sub)
-    m = match(regexp, expr)
     end
     return expr
 end
 
 function parse_expr(expr::String, chromos::Array{Chromosome,1}, flist::Array{String,1}=flist)
-  return reduce(
-    (x,y) -> parse_expr(replace(x, y[1], "e"), y[2]),
-    expr,
-    zip(flist, chromos)
-  )
+    zipped = zip(flist, chromos)
+    for z in zipped
+        te = replace(expr, z[1], "e")
+        expr = parse_expr(te, z[2])
+    end
+    return expr
 end
 
 function parse_expr(expr::String, indi::Individual, flist::Array{String,1}=flist)
@@ -450,29 +450,31 @@ julia>
 """
 function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist)
 
+    # Prepare for mevac calls
+    len = length(vars)
+    mevac_vars = map(x -> Base.unsafe_convert(Cstring, Base.cconvert(Cstring, x)), vars)
+
     # Error (Differential equation)
     ## Set up domain
     dom = map(x -> linspace(x...,10), ival)
     dom = product(dom...)
 
     ## Plug in the expressions in all differential equations and form a sum-of-squares
+    # The `de` is given as a list of string-reps.~of the differential equations.
+    # Square and add.
     indi_def = parse_expr(de, indi_clist, flist)
     indi_def = *("(" * indi_def[1] * ")^2", map(x-> " + ($x)^2", indi_def[2:end])...)
 
     ## Clean it up for rust/meval
     # silly silly rust using /wrong/ notation
     indi_def = replace(indi_def, "log", "ln")
-    # make raname `Inf` for rust
+    # make raname `Inf` and `NaN` for rust
     indi_def = replace(indi_def, "Inf", "1/0.0")
     indi_def = replace(indi_def, "NaN", "0.0/0.0")
     # remove juxtaposed expressions
     indi_def = safe_string(indi_def)
     #FIXME: Remove the use of `defunc` everywhere!
     defunc = x -> x
-
-    # Prepare for mevac calls
-    len = length(vars)
-    mevac_vars = map(x -> Base.unsafe_convert(Cstring, Base.cconvert(Cstring, x)), vars)
 
     # mevac calls
     indi_error = 0
@@ -485,40 +487,27 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     end
 
     # Penalty (Boundary condition)
+    # The boundary conditions are given as an array of [string-rep., [point]] so we
+    # loop over all the boundary conditions at these points and square and add.
     indi_penalty = 0
     lambda = 100
     for b in bc
+        # Plug in, and square expression
         indi_bcf = parse_expr(b[1], indi_clist, flist)
         indi_bcf = "(" * indi_bcf * ")^2"
+        # Clean it up for rust/meval
         indi_bcf = replace(indi_bcf, "log", "ln")
         indi_bcf = replace(indi_bcf, "Inf", "1/0.0")
         indi_bcf = replace(indi_bcf, "NaN", "0.0/0.0")
         indi_bcf = safe_string(indi_bcf)
-        #XXX: I'm lazy right now, just want to try for one example with one variable.
-        if len == 1
-            indi_penalty += ccall(
-                (:evalpt,"libmevac"),
-                Float64,
-                (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
-                indi_bcf, mevac_vars, [b[2][1][2]], len)
-        end
+
+        # call mevac
+        indi_penalty += ccall(
+            (:evalpt,"libmevac"),
+            Float64,
+            (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
+            indi_bcf, mevac_vars, b[2], len)
     end
-    indi_penalty = lambda*indi_penalty
-    #XXX: Disabling while coupling fitness to libmevac
-    #=
-    for b in bc
-        # define bcfunc
-        indi_bcf = parse_expr(b[1], indi_clist, flist)
-        f_body = parse(indi_bcf)
-        f_call = Expr(:call,:bcfunc,map(parse, vars)...)
-        eval(Expr(:function,f_call,f_body))
-        try
-            indi_penalty += (Base.invokelatest(bcfunc, map( x -> x[2] , b[2])...))^2
-        catch
-            indi_penalty += Inf
-        end
-    end
-    =#
     indi_penalty = lambda*indi_penalty
 
     # Shape-error (Higher derivative)

@@ -30,7 +30,7 @@ function pmet_tournament(pop::Array{Individual, 1}, selsize::Int=5)
 end
 
 """
-    pmet_tournament(pop, selsize)
+    pmet_random(pop, selsize)
 
 Parent selcetion method random.
 
@@ -44,7 +44,13 @@ end
 """
     p_select(pop, selsize, method)
 
+Perform a selection of parents from a population `pop` using `method`.
 
+# Methods
+
+`["tournament", "random"]`
+
+See documentation for `pmet_[method]` for a detailed explanation for each method.
 """
 function p_select(pop::Array{Individual, 1}, selsize::Int=5, method::String="tournament")
     methods = ["tournament", "random"]

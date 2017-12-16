@@ -6,7 +6,7 @@
 ###
 
 include("./../GeneticDESolver.jl")
-include("./../../odes/ode1.jl")
+include("./../../sodes/sode1.jl")
 
 functions = ["s", "c", "e", "l"];
 operators = ["+", "-", "*", "/"];
@@ -52,7 +52,7 @@ tail_l = 51;
 # have "wrapping events" that seems to be occuring when maximum length is reached. Hence
 # we will simulate this with allowing for two genes, but mostly 'z' operators allowed for
 # the header (which kills one gene, hence no wrapping)
-glen = 2
+glen = 1
 header_operators = vcat(operators, repeat(["z"], outer=20));
 #XXX: No, this is no good either. If length of the active elements of a gene were visible,
 # then a mutation of the header could be triggered by that.
@@ -71,7 +71,7 @@ dict = Dict(
 
 # [TL] has population size 1000, termination at 2000 iterations or 10.0^(-7) accuracy
 pop_size = 1000
-stop = 2000
+stop = 20
 sens = 10.0^(-7)
 
 println("Generating population...")
@@ -153,7 +153,7 @@ while iter < stop && pop[1].fitness > sens
     # Make the new population
     pop = vcat(m_pop, c_pop)
     # Mutate head to simulate "wrapping"
-    pop = map(x -> muthead(x, 0.6, "combo", 0.8), pop)
+    # pop = map(x -> muthead(x, 0.6, "combo", 0.8), pop)
 
     # And sort again
     pop = sort_pop(pop)

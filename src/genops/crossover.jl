@@ -255,7 +255,7 @@ function crossover(indiin1::Individual, indiin2::Individual, gselchance::Float64
     indi1, indi2 = deepcopy(indiin1), deepcopy(indiin2)
     new_clist1 = Chromosome[]
     new_clist2 = Chromosome[]
-    for c in length(indi1.clist)
+    for c in 1:length(indi1.clist)
         if rand() < cselchance
             c1, c2 = crossover(indi1.clist[c], indi2.clist[c], gselchance, method)
             push!(new_clist1, c1)
@@ -267,6 +267,5 @@ function crossover(indiin1::Individual, indiin2::Individual, gselchance::Float64
     end
     indi1.clist = new_clist1
     indi2.clist = new_clist2
-
     return reparse_indi(indi1), reparse_indi(indi2)
 end
