@@ -103,20 +103,20 @@ Here is an incomplete list of things that are/should be implemented.
 
 Overall capabilities
 
-|         | ODE | SODE          | PDE                 | SPDE       |
-|---------|:---:|:-------------:|:-------------------:|:----------:|
-| Works   |  ✓  |  ✓            |  ✗                  |  ✗         |
-| Problem |     |               | penalty-calculation | SODE + PDE |
+|         | ODE | SODE | PDE | SPDE |
+|---------|:---:|:----:|:---:|:----:|
+| Works   |  ✓  |  ✓   |  ✓  |  ?   |
+| Problem |     |      |     |  not tested    |
 
 ### Fitness and similar
 
 |         | ODE | SODE | PDE | SPDE |
 |---------|:---:|:----:|:---:|:----:|
-| Error   |  ✓  |  ✓   |  ?  |  ?   |
-| Penalty |  ✓  |  ✓   |  ✗  |  ✗   |
+| Error   |  ✓  |  ✓   |  ✓  |  ?   |
+| Penalty |  ✓  |  ✓   |  ✓  |  ?   |
 | Shape   |  ✗  |  ✗   |  ✗  |  ✗   |
 
-✓ = implemented, ✗ = not implemented, ? = not tested or not intensionally implemented
+✓ = implemented, ✗ = not implemented, ? = not tested and/or not intensionally implemented
 
 ### Genetic operators
 

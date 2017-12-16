@@ -35,10 +35,14 @@ julia> eval(parse(y))
 """
 function safe_string(instring::String)
     # regex from http://www.regular-expressions.info/floatingpoint.html
-    regex = r"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?x"
-    while typeof(match(regex, instring)) != Void
-        m = match(regex, instring).match[1:end-1]
-        instring = replace(instring, regex, m * " * x", 1)
+    for v in vars
+        regex = "[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?"
+        regex = regex * "$v"
+        regex = Regex(regex)
+        while typeof(match(regex, instring)) != Void
+            m = match(regex, instring).match[1:end-1]
+            instring = replace(instring, regex, m * " * $v", 1)
+        end
     end
     return instring
 end
@@ -458,6 +462,7 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     ## Set up domain
     dom = map(x -> linspace(x...,10), ival)
     dom = product(dom...)
+    dom = unique(dom)
 
     ## Plug in the expressions in all differential equations and form a sum-of-squares
     # The `de` is given as a list of string-reps.~of the differential equations.
@@ -492,6 +497,21 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
     indi_penalty = 0
     lambda = 100
     for b in bc
+        # Set up a domain
+        # For PDEs, boundary conditions are not points,
+        # so need to be calculated over domain instead.
+        dom = Tuple[]
+        for i in 1:length(b[2])
+            if typeof(b[2][i]) == String
+                dom = vcat(dom, tuple(ival[i]...))
+            else
+                dom = vcat(dom, tuple(b[2][i], b[2][i]))
+            end
+        end
+        dom = map(x -> linspace(x..., 10), dom)
+        dom = product(dom...)
+        dom = unique(dom)
+
         # Plug in, and square expression
         indi_bcf = parse_expr(b[1], indi_clist, flist)
         indi_bcf = "(" * indi_bcf * ")^2"
@@ -502,11 +522,13 @@ function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival
         indi_bcf = safe_string(indi_bcf)
 
         # call mevac
-        indi_penalty += ccall(
-            (:evalpt,"libmevac"),
-            Float64,
-            (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
-            indi_bcf, mevac_vars, b[2], len)
+        for pt in dom
+            indi_penalty += ccall(
+                (:evalpt,"libmevac"),
+                Float64,
+                (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
+                indi_bcf, mevac_vars, [pt...], len)
+        end
     end
     indi_penalty = lambda*indi_penalty
 
