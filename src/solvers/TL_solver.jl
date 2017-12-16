@@ -6,7 +6,7 @@
 ###
 
 include("./../GeneticDESolver.jl")
-include("./../../pdes/pde1.jl")
+include("./../../odes/nlode3.jl")
 
 functions = ["s", "c", "e", "l"];
 operators = ["+", "-", "*", "/"];

@@ -138,10 +138,8 @@ From **[TL]** the following differential equations are provided with this reposi
 
 | ODE | NLODE | SODE | PDE  |
 | --- | ----- | ---- | ---- |
-| 1   |       |  1   | 1(✗) |
+| 1   |  3    |  1   | 1    |
 | 3   |       |      |      |
-
-✗ = only partially provided.
 
 Other differential equations (no boundary conditions)
 
