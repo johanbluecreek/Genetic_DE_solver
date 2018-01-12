@@ -198,7 +198,7 @@ Avaliable methods are
 
 `["safe1point", "1point", "2point", "random"]`
 
-See documentation for `muth_[method]` for a description for each of the methods.
+See documentation for `cross_[method]` for a description for each of the methods.
 
 # Examples
 

@@ -23,10 +23,6 @@ B. Fogel
 * **[E]** "*Computational Intelligence: An Introduction*" by Andries P.
 Engelbrecht
 
-other references
-
-* **[TGG]** TSOULOS, Ioannis G. et GAVRILIS, Dimitris et GLAVAS, Euripidis "*Solving differential equations with constructed neural networks*". Neurocomputing 72 (2009) 2385-2391.
-
 ## Usage
 
 Usage documentation is very lacking at the moment. But, it has been tried on a machine with the following software
@@ -128,8 +124,6 @@ Here is an incomplete list of things that are/should be implemented.
 
     Important functions would be, for example, [Generalised Hypergeometric Functions](https://en.wikipedia.org/wiki/Generalized_hypergeometric_function).
 
-  * Complement with neural-network option, as in **[TGG]**. ✗
-
 ### Capabilities
 
 Overall capabilities
@@ -215,3 +209,5 @@ Crude TODO-list/feature wish-list
 * Make a pedagogical introduction in a jupyter-notebook for how all this works.
 * Construct benchmarks
 * Construct a proper test suite.
+* Extend the use of the rust-library everywhere it can improve performance.
+* Find a better way to handle global variables.
