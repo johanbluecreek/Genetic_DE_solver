@@ -13,12 +13,11 @@ Represents small/atomic mathematical expressions that should combine into expres
 representing solutions in a `Chromosome`.
 """
 type Gene
-    #XXX: Should act as old Chromosome
     elist::String         # String representation of the gene
     thestring::String     # String representation of the expression
     tree::String          # Tree-like representation of the clist
 
-    #XXX: See where it is most appropriate to save these.
+    #TODO: We can probably scrap these since we use the global variables.
     head::Array{String,1}             # Save of head list used
     head_l::Int                       # Save of head length used
     tail::Array{String,1}             # Save of tail list used
@@ -39,11 +38,8 @@ does not have a fitness. A collection of `Chromosome` types combine to an `Indiv
 represents the solution to the whole system (note that the system can be a system of one).
 """
 type Chromosome
-    #XXX: Should act as old Individual (except fitness)
     glist::Array{Gene,1}    # List of Genes
-
     header::String          # To combine Genes
-
     thestring::String       # Full string representation of mathematical expression
 end
 show(io::IO, x::Chromosome) = print(io, x.thestring)
@@ -55,8 +51,6 @@ Types representing complete solutions to systems of differential equations.
 """
 type Individual
     clist::Array{Chromosome,1}  # List of Chromosomes
-    #FIXME: Remove this (it doesn't work, and is not very useful anyway):
-    def::Function               # Function to evaluate the de
 
     # Fitness and its components
     error::Float64
@@ -64,7 +58,7 @@ type Individual
     shape::Float64
     fitness::Float64
 
-    # For save
+    #TODO: We can probably scrap these...
     de::Array{String,1}
     bc::Array{Any,1}
     ival::Array{Tuple{Float64,Float64},1}

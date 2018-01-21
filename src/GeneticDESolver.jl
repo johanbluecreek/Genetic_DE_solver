@@ -5,7 +5,11 @@ using Iterators
 
 import Base.show
 
+# Variable to determine if this file has been included
 GDES_loaded = true
+
+# Define default settings for global variables
+include("globaldefault.jl")
 
 # Types
 include("types.jl")

@@ -36,12 +36,11 @@ julia> mut_change(gene, 1.0)
 
 ```
 """
-function mut_change(genein::Gene, mrate::Float64)
+function mut_change(genein::Gene, mrate::Float64=0.6, functions=FUNCTIONS, operators=OPERATORS, terminators=TERMINATORS)
     gene = deepcopy(genein)
     new_elist = ""
     for part in gene.elist
         if rand() <= mrate
-            #XXX: This does not work great with global variables like this...
             if string(part) in functions
                 new_elist *= rand(functions)
             elseif string(part) in operators
@@ -49,7 +48,7 @@ function mut_change(genein::Gene, mrate::Float64)
             elseif string(part) in terminators
                 new_elist *= rand(terminators)
             else
-                println("WARNING: '$part' not found in the lists 'functions', 'operators', nor 'terminators'. Nothing done.")
+                println("WARNING: '$part' not found in the arrays 'functions', 'operators', nor 'terminators'. Nothing done.")
                 new_elist *= string(part)
             end
         else
@@ -82,7 +81,7 @@ julia> mut_random(test_gene, .2)
 
 ```
 """
-function mut_random(gene::Gene, mrate::Float64=1.0)
+function mut_random(gene::Gene, mrate::Float64=0.6)
     new_elist = ""
     iter = 1
     for part in gene.elist
@@ -99,6 +98,11 @@ function mut_random(gene::Gene, mrate::Float64=1.0)
     end
     return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
 end
+
+function mut_random(gene::Gene, mrate::Float64, functions, operators, terminators)
+    return mut_random(gene, mrate)
+end
+
 
 """
     mut_trunc(gene::Gene)
@@ -167,6 +171,10 @@ end
 
 function mut_trunc(genein::Gene, mrate::Float64)
     return mut_trunc(genein)
+end
+
+function mut_trunc(gene::Gene, mrate::Float64, functions, operators, terminators)
+    return mut_trunc(gene, mrate)
 end
 
 """
@@ -248,6 +256,10 @@ function mut_grow(genein::Gene, mrate::Float64)
     return mut_grow(genein)
 end
 
+function mut_grow(gene::Gene, mrate::Float64, functions, operators, terminators)
+    return mut_grow(gene, mrate)
+end
+
 """
     mut_swap(gene::Gene)
 
@@ -269,7 +281,7 @@ julia> mut_swap(gene)
 
 ```
 """
-function mut_swap(genein::Gene)
+function mut_swap(genein::Gene, operators=OPERATORS)
     gene = deepcopy(genein)
 
     # Find a operator that is to have its arguments swaped
@@ -321,8 +333,12 @@ function mut_swap(genein::Gene)
     return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
 end
 
-function mut_swap(genein::Gene, mrate::Float64)
-    return mut_swap(genein)
+function mut_swap(genein::Gene, mrate::Float64, operators)
+    return mut_swap(genein, operators)
+end
+
+function mut_swap(gene::Gene, mrate::Float64, functions, operators, terminators)
+    return mut_swap(gene, mrate, operators)
 end
 
 """
@@ -367,14 +383,14 @@ julia> mutate(indi)
 `Chromosomes`.
 
 """
-function mutate(inchromo::Chromosome, mrate::Float64=0.6, mselchance::Float64=0.2, method::String="change")
+function mutate(inchromo::Chromosome, mrate::Float64=0.6, mselchance::Float64=0.2, method::String="change", functions=FUNCTIONS, operators=OPERATORS, terminators=TERMINATORS)
     chromo = deepcopy(inchromo)
     methods = ["change", "swap", "grow", "trunc", "random"]
     if method in methods
         if length(chromo.glist) == 0 #XXX: Not been tested yet!
             ee = "mut_$method"
             ee = eval(parse(ee))
-            Gene[ee(chromo.glist[1], mrate)]
+            Gene[ee(chromo.glist[1], mrate, functions, operators, terminators)]
             chromo.glist = eval(parse(ee))
             chromo = reparse_chromo(chromo)
             return chromo
@@ -384,7 +400,7 @@ function mutate(inchromo::Chromosome, mrate::Float64=0.6, mselchance::Float64=0.
                 if rand() <= mselchance
                     ee = "mut_$method"
                     ee = eval(parse(ee))
-                    ee = ee(gene, mrate)
+                    ee = ee(gene, mrate, functions, operators, terminators)
                     push!(new_glist, ee)
                 else
                     push!(new_glist, gene)
@@ -400,12 +416,12 @@ function mutate(inchromo::Chromosome, mrate::Float64=0.6, mselchance::Float64=0.
     end
 end
 
-function mutate(inindi::Individual, mrate::Float64=0.6, mselchance::Float64=0.2, method::String="change", cselchance::Float64=0.8)
+function mutate(inindi::Individual, mrate::Float64=0.6, mselchance::Float64=0.2, method::String="change", cselchance::Float64=0.8, functions=FUNCTIONS, operators=OPERATORS, terminators=TERMINATORS)
     indi = deepcopy(inindi)
     new_clist = Chromosome[]
     for chromo in indi.clist
         if rand() <= cselchance
-            push!(new_clist, mutate(chromo, mrate, mselchance, method))
+            push!(new_clist, mutate(chromo, mrate, mselchance, method, functions, operators, terminators))
         else
             push!(new_clist, chromo)
         end

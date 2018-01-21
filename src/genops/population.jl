@@ -27,7 +27,7 @@ julia> gen_pop(5, de, bc, ival)
 
 ```
 """
-function gen_pop(pop_size::Int, de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist, glen::Int=2, header_operators::Array{String,1}=header_operators, head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
+function gen_pop(pop_size::Int, de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=FLIST, glen::Int=GLEN, header_operators::Array{String,1}=HEADER_OPERATORS, head::Array{String,1}=HEAD, head_l::Int=HEAD_L, tail::Array{String,1}=TAIL, tail_l::Int=TAIL_L, dict::Dict=DICT)
     pop = Individual[]
     while length(pop) < pop_size
         indi = init_indi(de, bc, ival, flist, glen, header_operators, head, head_l, tail, tail_l, dict)

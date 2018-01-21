@@ -33,7 +33,7 @@ julia> eval(parse(y))
 
 ```
 """
-function safe_string(instring::String)
+function safe_string(instring::String, vars::Array{String,1}=VARS)
     # regex from http://www.regular-expressions.info/floatingpoint.html
     for v in vars
         regex = "[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?"
@@ -71,7 +71,7 @@ julia> init_elist(head, 5, tail, 10)
 
 ```
 """
-function init_elist(head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l)
+function init_elist(head::Array{String,1}=HEAD, head_l::Int=HEAD_L, tail::Array{String,1}=TAIL, tail_l::Int=TAIL_L)
     elist = String[]
 
     for i in 1:head_l
@@ -103,7 +103,7 @@ julia> parse_elist(elist, dict)
 
 ```
 """
-function parse_elist(elist::String=init_elist(), dict::Dict=dict)
+function parse_elist(elist::String=init_elist(), dict::Dict=DICT)
     thestring = "<expr>"
     for i in elist
         thestring = replace(thestring, "<expr>", get(dict, "$i", "$i"), 1)
@@ -125,7 +125,8 @@ julia> parse_tree(elist)
 
 ```
 """
-function parse_tree(elist::String=init_elist())
+function parse_tree(elist::String=init_elist(), operators=OPERATORS, functions=FUNCTIONS, terminators=TERMINATORS)
+    #TODO: Add types to the above!
     tree = "("
     open = 1
     to_open = 0
@@ -195,7 +196,7 @@ julia> init_gene(["+"], 2, ["1", "2", "x"], 4, Dict("+" => "(<expr>)+(<expr>)"))
 
 ```
 """
-function init_gene(head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
+function init_gene(head::Array{String,1}=HEAD, head_l::Int=HEAD_L, tail::Array{String,1}=TAIL, tail_l::Int=TAIL_L, dict::Dict=DICT)
     elist = init_elist(head, head_l, tail, tail_l)
     thestring = parse_elist(elist, dict)
     tree = parse_tree(elist)
@@ -236,7 +237,6 @@ end
 # Chromosome functions
 ########################
 
-#XXX: Replaces: init_flat_indi
 """
     init_chromo(glen, head, head_l, tail, tail_l, dict)
 
@@ -249,7 +249,7 @@ julia> init_chromo(5, ["*"], ["+"], 2, ["1", "2", "x"], 4, Dict("+" => "(<expr>)
 
 ```
 """
-function init_chromo(glen::Int=5, header_operators::Array{String,1}=header_operators, head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
+function init_chromo(glen::Int=GLEN, header_operators::Array{String,1}=HEADER_OPERATORS, head::Array{String,1}=HEAD, head_l::Int=HEAD_L, tail::Array{String,1}=TAIL, tail_l::Int=TAIL_L, dict::Dict=DICT)
     glist = Gene[]
     thestring = ""
     header = ""
@@ -342,6 +342,224 @@ function eq_chromo(chromo1::Chromosome, chromo2::Chromosome)
     return eq
 end
 
+########################
+# Individual functions
+########################
+
+#XXX: Rewrite this example
+"""
+    gen_indi_attributes(clist, de, bc, ival[, flist])
+
+Generates all attributes for an `Individual` given a `clist::Array{Chromosome,1}`.
+
+# Examples
+```julia-repl
+julia>
+
+```
+"""
+function gen_indi_attributes(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=FLIST, vars=VARS)
+
+    # Prepare for mevac calls
+    len = length(vars)
+    mevac_vars = map(x -> Base.unsafe_convert(Cstring, Base.cconvert(Cstring, x)), vars)
+
+    # Error (Differential equation)
+    ## Set up domain
+    dom = map(x -> linspace(x...,10), ival)
+    dom = product(dom...)
+    dom = unique(dom)
+
+    ## Plug in the expressions in all differential equations and form a sum-of-squares
+    # The `de` is given as a list of string-reps.~of the differential equations.
+    # Square and add.
+    indi_def = parse_expr(de, indi_clist, flist)
+    indi_def = *("(" * indi_def[1] * ")^2", map(x-> " + ($x)^2", indi_def[2:end])...)
+
+    ## Clean it up for rust/meval
+    # silly silly rust using /wrong/ notation
+    indi_def = replace(indi_def, "log", "ln")
+    # make raname `Inf` and `NaN` for rust
+    indi_def = replace(indi_def, "Inf", "1/0.0")
+    indi_def = replace(indi_def, "NaN", "0.0/0.0")
+    # remove juxtaposed expressions
+    indi_def = safe_string(indi_def)
+
+    # mevac calls
+    indi_error = 0
+    for pt in dom
+        indi_error += ccall(
+            (:evalpt,"libmevac"),
+            Float64,
+            (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
+            indi_def, mevac_vars, [pt...], len)
+    end
+
+    # Penalty (Boundary condition)
+    # The boundary conditions are given as an array of [string-rep., [point]] so we
+    # loop over all the boundary conditions at these points and square and add.
+    indi_penalty = 0
+    lambda = 100
+    for b in bc
+        # Set up a domain
+        # For PDEs, boundary conditions are not points,
+        # so need to be calculated over domain instead.
+        dom = Tuple[]
+        for i in 1:length(b[2])
+            if typeof(b[2][i]) == String
+                dom = vcat(dom, tuple(ival[i]...))
+            else
+                dom = vcat(dom, tuple(b[2][i], b[2][i]))
+            end
+        end
+        dom = map(x -> linspace(x..., 10), dom)
+        dom = product(dom...)
+        dom = unique(dom)
+
+        # Plug in, and square expression
+        indi_bcf = parse_expr(b[1], indi_clist, flist)
+        indi_bcf = "(" * indi_bcf * ")^2"
+        # Clean it up for rust/meval
+        indi_bcf = replace(indi_bcf, "log", "ln")
+        indi_bcf = replace(indi_bcf, "Inf", "1/0.0")
+        indi_bcf = replace(indi_bcf, "NaN", "0.0/0.0")
+        indi_bcf = safe_string(indi_bcf)
+
+        # call mevac
+        for pt in dom
+            indi_penalty += ccall(
+                (:evalpt,"libmevac"),
+                Float64,
+                (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
+                indi_bcf, mevac_vars, [pt...], len)
+        end
+    end
+    indi_penalty = lambda*indi_penalty
+
+    # Shape-error (Higher derivative)
+    # XXX
+    indi_shape = 0
+
+    # Fitness
+    indi_fitness = indi_error + indi_penalty + indi_shape
+
+    # Return
+    return indi_error, indi_penalty, indi_shape, indi_fitness, de, bc, ival
+end
+
+
+
+"""
+    init_indi(de, bc, ival[, flist, header_operators, head, head_l, tail, tail_l, dict])
+
+Initialise a random individual. Short-hand that uses `gen_indi()`.
+
+# Examples
+```julia-repl
+julia> de = ["<f1x> + <f2x>", "<f1y> - (<f2y>)"];
+
+julia> bc = [1];
+
+julia> ival = [(0.1,1.0), (0.2,1.1)];
+
+julia> head_l = 2; tail_l = 4;
+
+julia> init_indi(de, bc, ival)
+200.0: (x), (y)
+
+```
+"""
+function init_indi(de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=FLIST, glen::Int=GLEN, header_operators::Array{String,1}=HEADER_OPERATORS, head::Array{String,1}=HEAD, head_l::Int=HEAD_L, tail::Array{String,1}=TAIL, tail_l::Int=TAIL_L, dict::Dict=DICT)
+    # List of Chromosomes
+    indi_clist = map(x -> init_chromo(glen, header_operators, head, head_l, tail, tail_l, dict), 1:length(flist))
+    return Individual(indi_clist, gen_indi_attributes(indi_clist, de, bc, ival, flist)...)
+end
+
+"""
+    reparse_indi(indi[, flist])
+
+Re-parse an `Individual` if its `clist` have changed. Short-hand for `gen_indi()`.
+
+# Examples
+```julia-repl
+julia> de = ["<f1x> + <f2x>", "<f1y> - (<f2y>)"];
+
+julia> bc = [1];
+
+julia> ival = [(0.1,1.0), (0.2,1.1)];
+
+julia> head_l = 2; tail_l = 4;
+
+julia> indi1 = init_indi(de, bc, ival)
+200.0: (x)+(y), (y)*(2)
+
+julia> indi2 = init_indi(de, bc, ival)
+0.0: (0)-(log(log(4))), ((2)*(0))-(7)
+
+julia> indi1.clist[1] = indi2.clist[1]
+(0)-(log(log(4)))
+
+julia> reparse_indi(indi1)
+400.0: (0)-(log(log(4))), (y)*(2)
+```
+"""
+function reparse_indi(inindi::Individual, flist::Array{String,1}=FLIST)
+    indi = deepcopy(inindi)
+    indi_clist = indi.clist
+
+    de = indi.de
+    bc = indi.bc
+    ival = indi.ival
+
+    return Individual(indi_clist, gen_indi_attributes(indi_clist, de, bc, ival, flist)...)
+end
+
+"""
+    eq_indi(indi1, indi2)
+
+Determines if two `Individual`s are equal.
+
+This is a short-hand running `eq_chromo()` on all `Chromosome`s that are a part of
+the `Individual`.
+
+# Examples
+```julia-repl
+julia> de = ["<f1x> + <f2x>", "<f1y> - (<f2y>)"];
+
+julia> bc = [1];
+
+julia> ival = [(0.1,1.0), (0.2,1.1)];
+
+julia> head_l = 2; tail_l = 4;
+
+julia> indi1 = init_indi(de, bc, ival)
+7786.7732432014: (y)*((cos(7))-(9)), (pi)*(x)
+
+julia> indi2 = init_indi(de, bc, ival)
+998383.0732874984: ((x))/(y), (exp(pi))/((y)*(2))
+
+julia> eq_indi(indi1, indi2)
+false
+
+julia> eq_indi(indi1, indi1)
+true
+
+```
+"""
+function eq_indi(indi1::Individual, indi2::Individual)
+    eq = true
+    for i in 1:length(indi1.clist)
+        if !eq_chromo(indi1.clist[i], indi2.clist[i])
+            eq = eq && false
+        end
+    end
+    return eq
+end
+
+#XXX: See comment on importing == from Base.
+# ==(indi1, indi2) = eq_indi(indi1, indi2)
+
+#TODO: Rewrite all this documentation.
 """
     parse_expr(expr[s], chromo[s][, flist])
 
@@ -415,7 +633,7 @@ function parse_expr(expr::String, chromo::Chromosome)
     return expr
 end
 
-function parse_expr(expr::String, chromos::Array{Chromosome,1}, flist::Array{String,1}=flist)
+function parse_expr(expr::String, chromos::Array{Chromosome,1}, flist::Array{String,1}=FLIST)
     zipped = zip(flist, chromos)
     for z in zipped
         te = replace(expr, z[1], "e")
@@ -424,233 +642,14 @@ function parse_expr(expr::String, chromos::Array{Chromosome,1}, flist::Array{Str
     return expr
 end
 
-function parse_expr(expr::String, indi::Individual, flist::Array{String,1}=flist)
+function parse_expr(expr::String, indi::Individual, flist::Array{String,1}=FLIST)
     return parse_expr(expr, indi.clist, flist)
 end
 
-function parse_expr(exprs::Array{String,1}, chromos::Array{Chromosome,1}, flist::Array{String,1}=flist)
+function parse_expr(exprs::Array{String,1}, chromos::Array{Chromosome,1}, flist::Array{String,1}=FLIST)
     return map(x -> parse_expr(x, chromos, flist), exprs)
 end
 
-function parse_expr(exprs::Array{String,1}, indi::Individual, flist::Array{String,1}=flist)
-    return parse_expr(x, indi.clist, flist)
+function parse_expr(exprs::Array{String,1}, indi::Individual, flist::Array{String,1}=FLIST)
+    return map(x -> parse_expr(x, indi.clist, flist), exprs)
 end
-
-########################
-# Individual functions
-########################
-
-#XXX: Add example below
-"""
-    gen_indi(clist, de, bc, ival[, length, flist, header_operators, head, head_l, tail, tail_l, dict])
-
-Generates all attributes for an `Individual` given a `clist::Array{Chromosome,1}`.
-
-# Examples
-```julia-repl
-julia>
-
-```
-"""
-function gen_indi(indi_clist::Array{Chromosome,1}, de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist)
-
-    # Prepare for mevac calls
-    len = length(vars)
-    mevac_vars = map(x -> Base.unsafe_convert(Cstring, Base.cconvert(Cstring, x)), vars)
-
-    # Error (Differential equation)
-    ## Set up domain
-    dom = map(x -> linspace(x...,10), ival)
-    dom = product(dom...)
-    dom = unique(dom)
-
-    ## Plug in the expressions in all differential equations and form a sum-of-squares
-    # The `de` is given as a list of string-reps.~of the differential equations.
-    # Square and add.
-    indi_def = parse_expr(de, indi_clist, flist)
-    indi_def = *("(" * indi_def[1] * ")^2", map(x-> " + ($x)^2", indi_def[2:end])...)
-
-    ## Clean it up for rust/meval
-    # silly silly rust using /wrong/ notation
-    indi_def = replace(indi_def, "log", "ln")
-    # make raname `Inf` and `NaN` for rust
-    indi_def = replace(indi_def, "Inf", "1/0.0")
-    indi_def = replace(indi_def, "NaN", "0.0/0.0")
-    # remove juxtaposed expressions
-    indi_def = safe_string(indi_def)
-    #FIXME: Remove the use of `defunc` everywhere!
-    defunc = x -> x
-
-    # mevac calls
-    indi_error = 0
-    for pt in dom
-        indi_error += ccall(
-            (:evalpt,"libmevac"),
-            Float64,
-            (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
-            indi_def, mevac_vars, [pt...], len)
-    end
-
-    # Penalty (Boundary condition)
-    # The boundary conditions are given as an array of [string-rep., [point]] so we
-    # loop over all the boundary conditions at these points and square and add.
-    indi_penalty = 0
-    lambda = 100
-    for b in bc
-        # Set up a domain
-        # For PDEs, boundary conditions are not points,
-        # so need to be calculated over domain instead.
-        dom = Tuple[]
-        for i in 1:length(b[2])
-            if typeof(b[2][i]) == String
-                dom = vcat(dom, tuple(ival[i]...))
-            else
-                dom = vcat(dom, tuple(b[2][i], b[2][i]))
-            end
-        end
-        dom = map(x -> linspace(x..., 10), dom)
-        dom = product(dom...)
-        dom = unique(dom)
-
-        # Plug in, and square expression
-        indi_bcf = parse_expr(b[1], indi_clist, flist)
-        indi_bcf = "(" * indi_bcf * ")^2"
-        # Clean it up for rust/meval
-        indi_bcf = replace(indi_bcf, "log", "ln")
-        indi_bcf = replace(indi_bcf, "Inf", "1/0.0")
-        indi_bcf = replace(indi_bcf, "NaN", "0.0/0.0")
-        indi_bcf = safe_string(indi_bcf)
-
-        # call mevac
-        for pt in dom
-            indi_penalty += ccall(
-                (:evalpt,"libmevac"),
-                Float64,
-                (Cstring,Array{Cstring,1},Array{Float64,1},UInt32),
-                indi_bcf, mevac_vars, [pt...], len)
-        end
-    end
-    indi_penalty = lambda*indi_penalty
-
-    # Shape-error (Higher derivative)
-    # XXX
-    indi_shape = 0
-
-    # Fitness
-    indi_fitness = indi_error + indi_penalty + indi_shape
-
-    # Return
-    return defunc, indi_error, indi_penalty, indi_shape, indi_fitness, de, bc, ival
-end
-
-
-
-"""
-    init_indi(de, bc, ival[, flist, header_operators, head, head_l, tail, tail_l, dict])
-
-Initialise a random individual. Short-hand that uses `gen_indi()`.
-
-# Examples
-```julia-repl
-julia> de = ["<f1x> + <f2x>", "<f1y> - (<f2y>)"];
-
-julia> bc = [1];
-
-julia> ival = [(0.1,1.0), (0.2,1.1)];
-
-julia> head_l = 2; tail_l = 4;
-
-julia> init_indi(de, bc, ival)
-200.0: (x), (y)
-
-```
-"""
-function init_indi(de::Array{String,1}, bc, ival::Array{Tuple{Float64,Float64},1}, flist::Array{String,1}=flist, glen::Int=5, header_operators::Array{String,1}=header_operators, head::Array{String,1}=head, head_l::Int=head_l, tail::Array{String,1}=tail, tail_l::Int=tail_l, dict::Dict=dict)
-    # List of Chromosomes
-    indi_clist = map(x -> init_chromo(glen, header_operators, head, head_l, tail, tail_l, dict), 1:length(flist))
-    return Individual(indi_clist, gen_indi(indi_clist, de, bc, ival, flist)...)
-end
-
-"""
-    reparse_indi(indi[, flist])
-
-Re-parse an `Individual` if its `clist` have changed. Short-hand for `gen_indi()`.
-
-# Examples
-```julia-repl
-julia> de = ["<f1x> + <f2x>", "<f1y> - (<f2y>)"];
-
-julia> bc = [1];
-
-julia> ival = [(0.1,1.0), (0.2,1.1)];
-
-julia> head_l = 2; tail_l = 4;
-
-julia> indi1 = init_indi(de, bc, ival)
-200.0: (x)+(y), (y)*(2)
-
-julia> indi2 = init_indi(de, bc, ival)
-0.0: (0)-(log(log(4))), ((2)*(0))-(7)
-
-julia> indi1.clist[1] = indi2.clist[1]
-(0)-(log(log(4)))
-
-julia> reparse_indi(indi1)
-400.0: (0)-(log(log(4))), (y)*(2)
-```
-"""
-function reparse_indi(inindi::Individual, flist::Array{String,1}=flist)
-    indi = deepcopy(inindi)
-    indi_clist = indi.clist
-
-    de = indi.de
-    bc = indi.bc
-    ival = indi.ival
-
-    return Individual(indi_clist, gen_indi(indi_clist, de, bc, ival, flist)...)
-end
-
-"""
-    eq_indi(indi1, indi2)
-
-Determines if two `Individual`s are equal.
-
-This is a short-hand running `eq_chromo()` on all `Chromosome`s that are a part of
-the `Individual`.
-
-# Examples
-```julia-repl
-julia> de = ["<f1x> + <f2x>", "<f1y> - (<f2y>)"];
-
-julia> bc = [1];
-
-julia> ival = [(0.1,1.0), (0.2,1.1)];
-
-julia> head_l = 2; tail_l = 4;
-
-julia> indi1 = init_indi(de, bc, ival)
-7786.7732432014: (y)*((cos(7))-(9)), (pi)*(x)
-
-julia> indi2 = init_indi(de, bc, ival)
-998383.0732874984: ((x))/(y), (exp(pi))/((y)*(2))
-
-julia> eq_indi(indi1, indi2)
-false
-
-julia> eq_indi(indi1, indi1)
-true
-
-```
-"""
-function eq_indi(indi1::Individual, indi2::Individual)
-    eq = true
-    for i in 1:length(indi1.clist)
-        if !eq_chromo(indi1.clist[i], indi2.clist[i])
-            eq = eq && false
-        end
-    end
-    return eq
-end
-
-#XXX: See comment on importing == from Base.
-# ==(indi1, indi2) = eq_indi(indi1, indi2)

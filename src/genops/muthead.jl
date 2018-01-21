@@ -43,13 +43,14 @@ function muth_scramble(inchromo::Chromosome, mrate::Float64=0.6)
     return reparse_chromo(chromo)
 end
 
+function muth_scramble(inchromo::Chromosome, mrate::Float64, header_operators)
+    return muth_scramble(inchromo, mrate)
+end
+
 """
-    muth_jump(chromo::Chromosome[, mrate])
+    muth_jump(chromo::Chromosome)
 
 Mutates the head of `chromo` by making two Genes jump places.
-
-`muth_jump()` has an optional argument `mrate` that has no effect, and is present only
-for uniform `muth_method()` syntax.
 
 # Examples
 ```julia-repl
@@ -64,7 +65,7 @@ julia> muth_jump(test_chromo)
 (2)+(y)/(log((6)*(x)))+(x)/(x)
 ```
 """
-function muth_jump(inchromo::Chromosome, mrate::Float64=0.6)
+function muth_jump(inchromo::Chromosome)
     chromo = deepcopy(inchromo)
     if length(chromo.glist) > 1
         r1 = rand(1:length(chromo.glist))
@@ -88,6 +89,14 @@ function muth_jump(inchromo::Chromosome, mrate::Float64=0.6)
     return reparse_chromo(chromo)
 end
 
+function muth_jump(inchromo::Chromosome, mrate)
+    return muth_jump(inchromo)
+end
+
+function muth_jump(inchromo::Chromosome, mrate, header_operators)
+    return muth_jump(inchromo, mrate)
+end
+
 """
     muth_combo(chromo::Chromosome[, mrate])
 
@@ -109,12 +118,12 @@ julia> muth_combo(test_chromo, .6)
 (log((6)*(x)))*(y)*(2)+(x)*(x)
 ```
 """
-function muth_combo(inchromo::Chromosome, mrate::Float64=0.6)
+function muth_combo(inchromo::Chromosome, mrate::Float64=0.6, header_operators=HEADER_OPERATORS)
     chromo = deepcopy(inchromo)
     new_header = ""
     for part in chromo.header
         if rand() <= mrate
-            new_header *= rand(operators)
+            new_header *= rand(header_operators)
         else
             new_header *= string(part)
         end
@@ -153,13 +162,13 @@ julia> muthead(test_chromo, .6, "combo")
 (log((6)*(x)))*(y)*(2)+(x)*(x)
 ```
 """
-function muthead(inchromo::Chromosome, mrate::Float64=0.6, method::String="jump")
+function muthead(inchromo::Chromosome, mrate::Float64=0.6, method::String="jump", header_operators=HEADER_OPERATORS)
     chromo = deepcopy(inchromo)
     methods = ["scramble", "jump", "combo"]
     if method in methods
         ee = "muth_$method"
         ee = eval(parse(ee))
-        ee = ee(chromo, mrate)
+        ee = ee(chromo, mrate, header_operators)
         return ee
     else
         println("WARNING: No support for method: '$method'. Nothing done.")
@@ -167,12 +176,12 @@ function muthead(inchromo::Chromosome, mrate::Float64=0.6, method::String="jump"
     end
 end
 
-function muthead(inindi::Individual, mrate::Float64=0.6, method::String="jump", cselchance::Float64=0.8)
+function muthead(inindi::Individual, mrate::Float64=0.6, method::String="jump", cselchance::Float64=0.8, header_operators=HEADER_OPERATORS)
     indi = deepcopy(inindi)
     new_clist = Chromosome[]
     for chromo in indi.clist
         if rand() < cselchance
-            push!(new_clist, muthead(chromo, mrate, method))
+            push!(new_clist, muthead(chromo, mrate, method, header_operators))
         else
             push!(new_clist, chromo)
         end
