@@ -107,8 +107,10 @@ function gen_p_pop(pop::Array{Individual, 1}, size::Int=10, selsize::Int=5, meth
         push!(new_pop, p_select(pop, selsize, method))
         next_p = p_select(pop, selsize, method)
         #XXX: This should probably be stopped if it goes on for too long
-        while eq_indi(next_p, new_pop[(2*i-1)])
+        j = 1
+        while eq_indi(next_p, new_pop[(2*i-1)]) && j <= 5
             next_p = p_select(pop, selsize, method)
+            j += 1
         end
         push!(new_pop, next_p)
     end
