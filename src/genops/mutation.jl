@@ -103,6 +103,43 @@ function mut_random(gene::Gene, mrate::Float64, functions, operators, terminator
     return mut_random(gene, mrate)
 end
 
+"""
+    mut_unsaferandom(gene, mrate)
+
+Selects one active point of the gene and mess it up.
+
+This is here to emulate a certain property of the BNF-grammar. In the BNF, where this code's
+version of the `elist` of a chromosome would be a string of numbers, what those numbers
+represent; operator, function or digit, depends on all previous entries. This differs from
+the Polish-notation used here, an `s` in the elist is always a `sin`-function (as per the
+default dictionary used here). This means in a random mutation in BNF, while still
+preserving the genetic material, the genetic material will in general get a new mathematical
+expressions.
+
+We cannot have both here. If we preserve genetic material the mathematical expression will
+be the same. This function emulates the occurence of random behaviour of the genetic
+material used at the cost of preserving genetic material.
+
+Similar to this there is also the `unsafe1point` method for `crossover()`.
+"""
+function mut_unsaferandom(gene::Gene, mrate::Float64=0.6)
+    new_elist = ""
+    iter = 1
+    picked = false
+    while !(picked) && (iter <= length(gene.elist))
+        if rand() <= mrate
+            picked = true
+            new_elist = gene.elist[1:iter] * init_elist()[iter:end]
+        end
+        iter += 1
+    end
+    return reparse_gene(Gene(new_elist, gene.thestring, gene.tree, gene.head, gene.head_l, gene.tail, gene.tail_l, gene.dict))
+end
+
+function mut_unsaferandom(gene::Gene, mrate::Float64, functions, operators, terminators)
+    return mut_random(gene, mrate)
+end
+
 
 """
     mut_trunc(gene::Gene)
@@ -385,7 +422,8 @@ julia> mutate(indi)
 """
 function mutate(inchromo::Chromosome, mrate::Float64=0.6, mselchance::Float64=0.2, method::String="change", functions=FUNCTIONS, operators=OPERATORS, terminators=TERMINATORS)
     chromo = deepcopy(inchromo)
-    methods = ["change", "swap", "grow", "trunc", "random"]
+    #FIXME: There should be a `saferandom` that only changes in the active material!
+    methods = ["change", "swap", "grow", "trunc", "random", "unsaferandom"]
     if method in methods
         if length(chromo.glist) == 0 #XXX: Not been tested yet!
             ee = "mut_$method"

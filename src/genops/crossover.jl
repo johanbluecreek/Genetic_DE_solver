@@ -159,6 +159,56 @@ function cross_2point(chromoin1::Chromosome, chromoin2::Chromosome, gselchance::
 end
 
 """
+    cross_unsafe1point(chromo1, chromo2, gselchance)
+
+Selects one active point of the two chomosomes and mess them up.
+
+This is here to emulate a certain property of the BNF-grammar. In the BNF, where this code's
+version of the `elist` of a chromosome would be a string of numbers, what those numbers
+represent; operator, function or digit, depends on all previous entries. This differs from
+the Polish-notation used here, an `s` in the elist is always a `sin`-function (as per the
+default dictionary used here). This means in a one-point crossover in BNF, while still
+preserving the genetic material, the genetic material will in general get a new mathematical
+expressions.
+
+We cannot have both here. If we preserve genetic material the mathematical expression will
+be the same. This function emulates the occurence of random behaviour of the genetic
+material used at the cost of preserving genetic material.
+
+Similar to this there is also the `unsaferandom` method for `mutate()`.
+"""
+function cross_unsafe1point(chromoin1::Chromosome, chromoin2::Chromosome, gselchance::Float64=0.8)
+    chromo1, chromo2 = deepcopy(chromoin1), deepcopy(chromoin2)
+    for g in 1:length(chromo1.glist)
+        if rand() <= gselchance
+            l1 = length(replace(replace(chromo1.glist[g].tree,"(",""),")",""))
+            l2 = length(replace(replace(chromo2.glist[g].tree,"(",""),")",""))
+            rnd = 1
+            if l1 <= l2
+                rnd = rand(1:l1)
+            elseif l2 < l1
+                rnd = rand(1:l2)
+            else
+                rnd = rand(2:Int(length(chromo1.glist[1].elist)))
+            end
+            #XXX: init_elist() uses global variables, that are not passed to this function
+            # so that they could be overwritten! Rethink global variables!
+            # Either use them in function arguments, but then always so! or never! Or use
+            # the types for this!
+            etail1 = init_elist()[rnd+1:end]
+            etail2 = init_elist()[rnd+1:end]
+            new_elist1 = chromo1.glist[g].elist[1:rnd] * etail1
+            new_elist2 = chromo2.glist[g].elist[1:rnd] * etail2
+            chromo1.glist[g].elist = new_elist1
+            chromo2.glist[g].elist = new_elist2
+            chromo1.glist[g] = reparse_gene(chromo1.glist[g])
+            chromo2.glist[g] = reparse_gene(chromo2.glist[g])
+        end
+    end
+    return reparse_chromo(chromo1), reparse_chromo(chromo2)
+end
+
+"""
     cross_random(chromo1, chromo2, gselchance)
 
 Random jumps of Genes between two Chromosomes.
@@ -240,7 +290,7 @@ julia> map(x -> x.elist, c3.glist), map(x -> x.elist, c4.glist)
 """
 function crossover(chromoin1::Chromosome, chromoin2::Chromosome, gselchance::Float64=0.8, method = "safe1point")
     chromo1, chromo2 = deepcopy(chromoin1), deepcopy(chromoin2)
-    methods = ["safe1point", "1point", "2point", "random"]
+    methods = ["safe1point", "1point", "2point", "unsafe1point", "random"]
     if method in methods
         ee = "cross_$method"
         ee = eval(parse(ee))
