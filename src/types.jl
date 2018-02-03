@@ -58,7 +58,7 @@ type Individual
     shape::Float64
     fitness::Float64
 
-    #TODO: We can probably scrap these...
+    #TODO: scrap these.
     de::Array{String,1}
     bc::Array{Any,1}
     ival::Array{Tuple{Float64,Float64},1}

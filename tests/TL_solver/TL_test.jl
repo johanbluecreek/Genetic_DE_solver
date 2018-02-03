@@ -4,11 +4,11 @@ include("../../solvers/TL_solver.jl")
 diffs = ["../../des/odes/ode1.jl"]
 sols = []
 
-loops = 5
+loops = 30
 
 for diff in diffs
     for i in 1:loops
-        sol = TL_solver(diff, 100, Inf, 1000, 100, 10.0^(-7))
+        sol = TL_solver(diff, 100.0, Inf, 1000, 100, 10.0^(-7))
         append!(sols, [sol])
     end
 end

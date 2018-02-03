@@ -5,14 +5,18 @@ using ProgressMeter
 include("../src/GeneticDESolver.jl")
 # this is defined outside of `TL_Solver` to not screw up world age.
 
-function TL_solver(de_file::String, penalty_factor::Union{Int64,Float64}=100, shape_decay::Union{Int64,Float64}=Inf, pop_size::Int64=1000, stop::Int64=2000, sens::Float64=10.0^(-7))
+function TL_solver(de_file::String, penalty_factor::Float64=100.0, shape_decay::Float64=Inf, pop_size::Int64=1000, stop::Int64=2000, sens::Float64=10.0^(-7))
 
     # Include the differential equation
     include(de_file)
 
-    # Redefine the global defaults
-    global FLIST = flist
-    global VARS = vars
+    # Redefine the global defaults if not correct
+    if !isequal(FLIST, flist)
+        global FLIST = flist
+    end
+    if !isequal(VARS, vars)
+        global VARS = vars
+    end
 
     # Set function and operator basis
     functions = ["s", "c", "e", "l"];
@@ -22,15 +26,23 @@ function TL_solver(de_file::String, penalty_factor::Union{Int64,Float64}=100, sh
     # These are as in [TL].
 
     # Redefine the global defaults
-    global FUNCTIONS = functions
-    global OPERATORS = operators
-    global DIGITS = digits
+    if !isequal(FUNCTIONS, functions)
+        global FUNCTIONS = functions
+    end
+    if !isequal(OPERATORS, operators)
+        global OPERATORS = operators
+    end
+    if !isequal(DIGITS, digits)
+        global DIGITS = digits
+    end
 
     # Let the functions know which are the
     terminators = vcat(digits, vars);
 
     # Redefine the global defaults
-    global TERMINATORS = terminators
+    if !isequal(TERMINATORS, terminators)
+        global TERMINATORS = terminators
+    end
 
     # The grammar of [TL] is different,
     # Chance to select any operator is equal to the chance of getting the unity operator,
@@ -57,10 +69,18 @@ function TL_solver(de_file::String, penalty_factor::Union{Int64,Float64}=100, sh
     tail_l = 51;
 
     # Redefine the global defaults
-    global HEAD = head
-    global TAIL = tail
-    global HEAD_L = head_l
-    global TAIL_L = tail_l
+    if !isequal(HEAD, head)
+        global HEAD = head
+    end
+    if !isequal(TAIL, tail)
+        global TAIL = tail
+    end
+    if !isequal(HEAD_L, head_l)
+        global HEAD_L = head_l
+    end
+    if !isequal(TAIL_L, tail_l)
+        global TAIL_L = tail_l
+    end
 
     # [TL] does not have their expression composed of several genes in this sense. But they do
     # have "wrapping events" that seems to be occuring when maximum length is reached. Hence
@@ -72,14 +92,22 @@ function TL_solver(de_file::String, penalty_factor::Union{Int64,Float64}=100, sh
     # visible, then a mutation of the header could be triggered by that.
 
     # Redefine global defaults
-    global GLEN = glen
-    global HEADER_OPERATORS = header_operators
+    if !isequal(GLEN, glen)
+        global GLEN = glen
+    end
+    if !isequal(HEADER_OPERATORS, header_operators)
+        global HEADER_OPERATORS = header_operators
+    end
 
     # [TL] has a penalty factor for the boundary conditions contribution to the complete
     # fitness. They also do not have a shape implemented, so we disable that here. These are
     # given as an argument to the function, so we simply overide defaults
-    global PENALTY_FACTOR = penalty_factor
-    global SHAPE_DECAY = shape_decay
+    if !isequal(PENALTY_FACTOR, penalty_factor)
+        global PENALTY_FACTOR = penalty_factor
+    end
+    if !isequal(SHAPE_DECAY, shape_decay)
+        global SHAPE_DECAY = shape_decay
+    end
 
     pop = gen_pop(pop_size, de, bc, ival)
 

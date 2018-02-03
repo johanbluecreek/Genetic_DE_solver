@@ -3,9 +3,9 @@
 
 #TODO: Be more strict with the types
 
-FUNCTIONS = ["s", "c", "e", "l", "u"];
-OPERATORS = ["+", "-", "*", "/"];
-DIGITS = vcat(["$i" for i=range(0,10)]);
+FUNCTIONS = String["s", "c", "e", "l", "u"];
+OPERATORS = String["+", "-", "*", "/"];
+DIGITS = vcat(String["$i" for i=range(0,10)]);
 
 HEAD = [FUNCTIONS; OPERATORS; DIGITS];
 TAIL = DIGITS;
@@ -13,10 +13,10 @@ TAIL = DIGITS;
 HEAD_L = 5;
 TAIL_L = 6;
 
-HEADER_OPERATORS = [OPERATORS; ["z"]];
+HEADER_OPERATORS = [OPERATORS; String["z"]];
 
-PENALTY_FACTOR = 100;
-SHAPE_DECAY = 1000;
+PENALTY_FACTOR = 100.0;
+SHAPE_DECAY = 1000.0;
 
 DICT = Dict(
     "+" => "(<expr>)+(<expr>)",
@@ -30,9 +30,9 @@ DICT = Dict(
     "u" => "(<expr>)",
 );
 
-FLIST = ["e"];
-VARS = ["x", "y"];
+FLIST = String["e"];
+VARS = String["x", "y"];
 
-TERMINATORS = [DIGITS; VARS];
+TERMINATORS = String[DIGITS; VARS];
 
 GLEN = 2;
